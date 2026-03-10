@@ -12,7 +12,9 @@ type Reservation struct {
 	UserID uint
 	User   User `gorm:"foreignKey:UserID"`
 
-	Workspace Workspace `gorm:"foreignKey:WorkspaceID"`
+	WorkspaceID uint
+	Workspace   Workspace `gorm:"foreignKey:WorkspaceID"`
+
 	TariffID  uint
 	Tariff    Tariff    `gorm:"foreignKey:TariffID"`
 	StartTime time.Time `gorm:"not null"`

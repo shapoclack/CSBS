@@ -5,7 +5,7 @@ import "gorm.io/gorm"
 type User struct {
 	gorm.Model
 
-	RoleID       uint
+	RoleID       *uint
 	Role         Role   `gorm:"foreignKey:RoleID"`
 	FullName     string `gorm:"size:255;not null"`
 	Email        string `gorm:"size:255;not null;unique"`
