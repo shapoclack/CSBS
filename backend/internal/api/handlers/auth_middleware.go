@@ -5,13 +5,10 @@ import (
 	"net/http"
 	"strings"
 
+	"csbs/backend/internal/api/middleware"
+
 	"github.com/golang-jwt/jwt/v5"
 )
-
-// ключ для хранения user_id в контексте запроса
-type contextKey string
-
-const UserIDKey contextKey = "user_id"
 
 func AuthMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -31,10 +28,17 @@ func AuthMiddleware(next http.Handler) http.Handler {
 			http.Error(w, "Невалидный токен", http.StatusUnauthorized)
 			return
 		}
-		// 4. Достаём user_id из токена и кладём в контекст запроса
+		// 4. Достаём user_id и role из токена и кладём в контекст запроса
 		claims := token.Claims.(jwt.MapClaims)
 		userID := uint(claims["user_id"].(float64))
-		ctx := context.WithValue(r.Context(), UserIDKey, userID)
+        
+		userRole := ""
+		if roleClaim, ok := claims["role"]; ok {
+			userRole = roleClaim.(string)
+		}
+
+		ctx := context.WithValue(r.Context(), middleware.UserIDKey, userID)
+		ctx = context.WithValue(ctx, middleware.UserRoleKey, userRole)
 		next.ServeHTTP(w, r.WithContext(ctx))
 	})
 }

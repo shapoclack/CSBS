@@ -1,14 +1,15 @@
 package main
 
 import (
-	api "csbs/backend/internal/api/handlers"
+	"csbs/backend/internal/api/handlers"
+	"csbs/backend/internal/config"
 	"csbs/backend/internal/models"
 	"csbs/backend/internal/repository"
 	"csbs/backend/internal/service"
+	"csbs/backend/pkg/gemini"
 	"fmt"
 	"log"
 	"net/http"
-	"os"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
@@ -25,13 +26,10 @@ func main() {
 		log.Fatalf("Error loading .env file: %v", err)
 	}
 
+	cfg := config.Load()
+
 	dsn := fmt.Sprintf("host=%s user=%s password=%s dbname=%s port=%s sslmode=disable TimeZone=Europe/Moscow",
-		os.Getenv("DB_HOST"),
-		os.Getenv("DB_USER"),
-		os.Getenv("DB_PASSWORD"),
-		os.Getenv("DB_NAME"),
-		os.Getenv("DB_PORT"),
-	)
+		cfg.DBHost, cfg.DBUser, cfg.DBPassword, cfg.DBName, cfg.DBPort)
 
 	db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{})
 	if err != nil {
@@ -54,6 +52,8 @@ func main() {
 	}
 	log.Println("Database migrated")
 
+	seedRoles(db)
+
 	workspaceRepo := repository.NewWorkspaceRepository(db)
 	workspaceService := service.NewWorkspaceService(workspaceRepo)
 	workspaceHandler := api.NewWorkspaceHandler(workspaceService)
@@ -63,6 +63,17 @@ func main() {
 	reservationRepo := repository.NewReservationRepository(db)
 	reservationService := service.NewReservationService(reservationRepo)
 	reservationHandler := api.NewReservationHandler(reservationService)
+	tariffRepo := repository.NewTariffRepository(db)
+	tariffService := service.NewTariffService(tariffRepo)
+	tariffHandler := api.NewTariffHandler(tariffService)
+	adminHandler := api.NewAdminHandler(userService)
+	auditRepo := repository.NewAuditLogRepository(db)
+	auditService := service.NewAuditLogService(auditRepo)
+	auditHandler := api.NewAuditLogHandler(auditService)
+
+	geminiClient := gemini.NewClient(cfg.GeminiAPIKey)
+	predictionService := service.NewPredictionService(geminiClient)
+	predictionHandler := api.NewPredictionHandler(predictionService)
 
 	r := chi.NewRouter()
 	// Middleware
@@ -81,8 +92,12 @@ func main() {
 	r.Mount("/api/workspaces", workspaceHandler.Routes())
 	r.Mount("/api/users", userHandler.Routes())
 	r.Mount("/api/reservations", reservationHandler.Routes())
+	r.Mount("/api/tariffs", tariffHandler.Routes())
+	r.Mount("/api/admin", adminHandler.Routes())
+	r.Mount("/api/auditlogs", auditHandler.Routes())
+	r.Mount("/api/predictions", predictionHandler.Routes())
 
-	port := os.Getenv("SERVER_PORT")
+	port := cfg.ServerPort
 	if port == "" {
 		port = "8080"
 	}
@@ -93,4 +108,16 @@ func main() {
 	if err != nil {
 		log.Fatalf("Server failed to start: %v", err)
 	}
+}
+
+func seedRoles(db *gorm.DB) {
+	roles := []models.Role{
+		{Name: models.RoleUser},
+		{Name: models.RoleCoworkAdmin},
+		{Name: models.RoleSystemAdmin},
+	}
+	for _, role := range roles {
+		db.FirstOrCreate(&role, models.Role{Name: role.Name})
+	}
+	log.Println("Roles ensured in database")
 }

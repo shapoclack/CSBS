@@ -1,6 +1,7 @@
 package api
 
 import (
+	"csbs/backend/internal/api/middleware"
 	"csbs/backend/internal/service"
 	"encoding/json"
 	"net/http"
@@ -34,7 +35,7 @@ type createReservationRequest struct {
 
 func (h *ReservationHandler) create(w http.ResponseWriter, r *http.Request) {
 	// Достаём user_id из контекста (положил туда AuthMiddleware)
-	userID := r.Context().Value(UserIDKey).(uint)
+	userID := r.Context().Value(middleware.UserIDKey).(uint)
 
 	var req createReservationRequest
 	err := json.NewDecoder(r.Body).Decode(&req)
@@ -58,7 +59,7 @@ func (h *ReservationHandler) create(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *ReservationHandler) getUserReservations(w http.ResponseWriter, r *http.Request) {
-	userID := r.Context().Value(UserIDKey).(uint)
+	userID := r.Context().Value(middleware.UserIDKey).(uint)
 
 	reservations, err := h.service.GetUserReservations(userID)
 	if err != nil {
