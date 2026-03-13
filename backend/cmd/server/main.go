@@ -1,14 +1,15 @@
 package main
 
 import (
-	api "csbs/backend/internal/api/handlers"
+	"csbs/backend/internal/api/handlers"
+	"csbs/backend/internal/config"
 	"csbs/backend/internal/models"
 	"csbs/backend/internal/repository"
 	"csbs/backend/internal/service"
+	"csbs/backend/pkg/gemini"
 	"fmt"
 	"log"
 	"net/http"
-	"os"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
@@ -25,13 +26,10 @@ func main() {
 		log.Fatalf("Error loading .env file: %v", err)
 	}
 
+	cfg := config.Load()
+
 	dsn := fmt.Sprintf("host=%s user=%s password=%s dbname=%s port=%s sslmode=disable TimeZone=Europe/Moscow",
-		os.Getenv("DB_HOST"),
-		os.Getenv("DB_USER"),
-		os.Getenv("DB_PASSWORD"),
-		os.Getenv("DB_NAME"),
-		os.Getenv("DB_PORT"),
-	)
+		cfg.DBHost, cfg.DBUser, cfg.DBPassword, cfg.DBName, cfg.DBPort)
 
 	db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{})
 	if err != nil {
@@ -55,29 +53,42 @@ func main() {
 	}
 	log.Println("Database migrated")
 
-	workspaceRepo := repository.NewWorkspaceRepository(db)
-	workspaceService := service.NewWorkspaceService(workspaceRepo)
-	workspaceHandler := api.NewWorkspaceHandler(workspaceService)
-	userRepo := repository.NewUserRepository(db)
-	userService := service.NewUserService(userRepo)
-	userHandler := api.NewUserHandler(userService)
+	seedRoles(db)
 
+	// Repositories
+	locationRepo := repository.NewLocationRepository(db)
+	workspaceRepo := repository.NewWorkspaceRepository(db)
+	userRepo := repository.NewUserRepository(db)
 	auditRepo := repository.NewAuditRepository(db)
 	reservationRepo := repository.NewReservationRepository(db)
-	reservationService := service.NewReservationService(reservationRepo, auditRepo)
-	reservationHandler := api.NewReservationHandler(reservationService)
-
 	tariffRepo := repository.NewTariffRepository(db)
-	tariffService := service.NewTariffService(tariffRepo)
-	tariffHandler := api.NewTariffHandler(tariffService)
-
 	categoryRepo := repository.NewCategoryRepository(db)
-	categoryService := service.NewCategoryService(categoryRepo)
-	categoryHandler := api.NewCategoryHandler(categoryService)
-
 	amenityRepo := repository.NewAmenityRepository(db)
+
+	// Services
+	locationService := service.NewLocationService(locationRepo)
+	workspaceService := service.NewWorkspaceService(workspaceRepo)
+	userService := service.NewUserService(userRepo)
+	reservationService := service.NewReservationService(reservationRepo, auditRepo)
+	tariffService := service.NewTariffService(tariffRepo)
+	categoryService := service.NewCategoryService(categoryRepo)
 	amenityService := service.NewAmenityService(amenityRepo)
-	amenityHandler := api.NewAmenityHandler(amenityService)
+	auditLogService := service.NewAuditLogService(auditRepo)
+	
+	geminiClient := gemini.NewClient(cfg.GeminiAPIKey)
+	predictionService := service.NewPredictionService(geminiClient)
+
+	// Handlers
+	locationHandler := handlers.NewLocationHandler(locationService)
+	workspaceHandler := handlers.NewWorkspaceHandler(workspaceService)
+	userHandler := handlers.NewUserHandler(userService)
+	reservationHandler := handlers.NewReservationHandler(reservationService)
+	tariffHandler := handlers.NewTariffHandler(tariffService)
+	categoryHandler := handlers.NewCategoryHandler(categoryService)
+	amenityHandler := handlers.NewAmenityHandler(amenityService)
+	adminHandler := handlers.NewAdminHandler(userService)
+	auditLogHandler := handlers.NewAuditLogHandler(auditLogService)
+	predictionHandler := handlers.NewPredictionHandler(predictionService)
 
 	r := chi.NewRouter()
 	// Middleware
@@ -89,21 +100,29 @@ func main() {
 		AllowedHeaders:   []string{"Accept", "Authorization", "Content-Type"},
 		AllowCredentials: true,
 	}))
+
 	// Routes
 	r.Get("/", func(w http.ResponseWriter, r *http.Request) {
 		w.Write([]byte("Hello World"))
 	})
-	r.Mount("/api/workspaces", workspaceHandler.Routes())
-	r.Mount("/api/users", userHandler.Routes())
-	r.Mount("/api/reservations", reservationHandler.Routes())
-	r.Mount("/api/tariffs", tariffHandler.Routes())
-	r.Mount("/api/categories", categoryHandler.Routes())
-	r.Mount("/api/services", amenityHandler.Routes())
+	
+	r.Route("/api", func(r chi.Router) {
+		r.Mount("/workspaces", workspaceHandler.Routes())
+		r.Mount("/users", userHandler.Routes())
+		r.Mount("/reservations", reservationHandler.Routes())
+		r.Mount("/tariffs", tariffHandler.Routes())
+		r.Mount("/categories", categoryHandler.Routes())
+		r.Mount("/services", amenityHandler.Routes())
+		r.Mount("/locations", locationHandler.Routes())
+		r.Mount("/admin", adminHandler.Routes())
+		r.Mount("/auditlogs", auditLogHandler.Routes())
+		r.Mount("/predictions", predictionHandler.Routes())
+	})
 
 	// Call seeder
 	seedDatabase(db)
 
-	port := os.Getenv("SERVER_PORT")
+	port := cfg.ServerPort
 	if port == "" {
 		port = "8080"
 	}
@@ -155,12 +174,6 @@ func seedDatabase(db *gorm.DB) {
 		db.Create(&models.Service{Name: "Маркерная доска", Description: "Для записей и схем"})
 	}
 
-	db.Model(&models.Role{}).Count(&count)
-	if count == 0 {
-		db.Create(&models.Role{Name: "Admin"})
-		db.Create(&models.Role{Name: "User"})
-	}
-
 	db.Model(&models.Workspace{}).Count(&count)
 	if count == 0 {
 		// LOCATION 1: CSBS Центр 
@@ -194,4 +207,16 @@ func seedDatabase(db *gorm.DB) {
 	}
 
 	log.Println("Database seeded (if empty)")
+}
+
+func seedRoles(db *gorm.DB) {
+	roles := []models.Role{
+		{Name: models.RoleUser},
+		{Name: models.RoleCoworkAdmin},
+		{Name: models.RoleSystemAdmin},
+	}
+	for _, role := range roles {
+		db.FirstOrCreate(&role, models.Role{Name: role.Name})
+	}
+	log.Println("Roles ensured in database")
 }

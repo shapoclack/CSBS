@@ -1,4 +1,4 @@
-package api
+package handlers
 
 import (
 	"csbs/backend/internal/service"

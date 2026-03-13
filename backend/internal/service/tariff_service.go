@@ -6,7 +6,10 @@ import (
 )
 
 type TariffService interface {
-	GetAllTariffs() ([]models.Tariff, error)
+	GetAll() ([]models.Tariff, error)
+	CreateTariff(tariff *models.Tariff) error
+	UpdateTariff(tariff *models.Tariff) error
+	DeleteTariff(id uint) error
 }
 
 type tariffServiceImpl struct {
@@ -17,6 +20,18 @@ func NewTariffService(repo repository.TariffRepository) TariffService {
 	return &tariffServiceImpl{repo: repo}
 }
 
-func (s *tariffServiceImpl) GetAllTariffs() ([]models.Tariff, error) {
+func (s *tariffServiceImpl) GetAll() ([]models.Tariff, error) {
 	return s.repo.GetAll()
+}
+
+func (s *tariffServiceImpl) CreateTariff(tariff *models.Tariff) error {
+	return s.repo.Create(tariff)
+}
+
+func (s *tariffServiceImpl) UpdateTariff(tariff *models.Tariff) error {
+	return s.repo.Update(tariff)
+}
+
+func (s *tariffServiceImpl) DeleteTariff(id uint) error {
+	return s.repo.Delete(id)
 }

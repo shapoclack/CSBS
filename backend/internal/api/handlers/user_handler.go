@@ -1,6 +1,7 @@
-package api
+package handlers
 
 import (
+	"csbs/backend/internal/api/middleware"
 	"csbs/backend/internal/service"
 	"encoding/json"
 	"net/http"
@@ -78,7 +79,7 @@ func (h *UserHandler) login(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *UserHandler) getMe(w http.ResponseWriter, r *http.Request) {
-	userID := r.Context().Value(UserIDKey).(uint)
+	userID := r.Context().Value(middleware.UserIDKey).(uint)
 
 	user, err := h.service.GetUserByID(userID)
 	if err != nil {

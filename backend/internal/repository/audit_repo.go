@@ -8,6 +8,7 @@ import (
 
 type AuditRepository interface {
 	Create(log *models.AuditLog) error
+	GetAll() ([]models.AuditLog, error)
 }
 
 type auditRepositoryImpl struct {
@@ -20,4 +21,10 @@ func NewAuditRepository(db *gorm.DB) AuditRepository {
 
 func (r *auditRepositoryImpl) Create(log *models.AuditLog) error {
 	return r.db.Create(log).Error
+}
+
+func (r *auditRepositoryImpl) GetAll() ([]models.AuditLog, error) {
+	var logs []models.AuditLog
+	err := r.db.Order("created_at desc").Find(&logs).Error
+	return logs, err
 }
