@@ -9,6 +9,7 @@ import './Booking.css';
 export default function Booking() {
     const [selectedType, setSelectedType] = useState('desk');
     const [selectedDesk, setSelectedDesk] = useState(null);
+    const [tariffs, setTariffs] = useState([]);
 
     const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
     const [isLoggedIn, setIsLoggedIn] = useState(false);
@@ -17,6 +18,10 @@ export default function Booking() {
         const checkAuth = () => setIsLoggedIn(localStorage.getItem('isAuthenticated') === 'true');
         checkAuth();
         window.addEventListener('authChange', checkAuth);
+
+        // Fetch tariffs
+        apiService.getTariffs().then(data => setTariffs(data)).catch(console.error);
+
         return () => window.removeEventListener('authChange', checkAuth);
     }, []);
 
@@ -29,11 +34,17 @@ export default function Booking() {
         setSelectedDesk(deskId);
     };
 
-    const getPrice = () => {
+    const getPrice = (tariffStr, location) => {
         if (!selectedDesk) return '—';
-        if (selectedType === 'office') return '15 000 ₽/день';
-        if (selectedType === 'room') return '1 500 ₽/ч';
-        return '1 200 ₽/день';
+        if (!location) return 'Выберите локацию';
+        
+        const durationMap = { '1h': 60, '4h': 240, '8h': 480 };
+        const mins = durationMap[tariffStr];
+        
+        const t = tariffs.find(t => t.LocationID === parseInt(location) && t.DurationMinutes === mins);
+        if (t) return `${t.Price} ₽`;
+        
+        return '—';
     };
 
     const handleReservationSubmit = async (formData) => {
@@ -42,8 +53,12 @@ export default function Booking() {
             const workspaceIdMatch = selectedDesk.match(/\d+/);
             const wId = workspaceIdMatch ? parseInt(workspaceIdMatch[0], 10) : 1;
             
-            // Tariff calculation roughly
-            const tId = selectedType === 'office' ? 3 : (selectedType === 'room' ? 2 : 1);
+            const durationMap = { '1h': 60, '4h': 240, '8h': 480 };
+            const mins = durationMap[formData.tariff || '1h'];
+            // Find tariff ID. If location not passed in formData, fallback to 1
+            const locId = formData.location ? parseInt(formData.location) : 1;
+            const t = tariffs.find(t => t.LocationID === locId && t.DurationMinutes === mins);
+            const tId = t ? t.ID : 1;
 
             // Construct ISO strings "2026-03-15T10:00:00Z"
             // Ensure dateFrom is set, else use today

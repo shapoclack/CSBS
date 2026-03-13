@@ -3,6 +3,7 @@ package service
 import (
 	"csbs/backend/internal/models"
 	"csbs/backend/internal/repository"
+	"csbs/backend/pkg/logger"
 )
 
 type CategoryService interface {
@@ -18,5 +19,6 @@ func NewCategoryService(repo repository.CategoryRepository) CategoryService {
 }
 
 func (s *categoryServiceImpl) GetAllCategories() ([]models.WorkspaceCategory, error) {
+	logger.Info.Println("Service: Requesting all workspace categories")
 	return s.repo.GetAll()
 }

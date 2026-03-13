@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { CalendarCheck, MapPin, Building2, Presentation, Armchair } from 'lucide-react';
 import DatePicker from './DatePicker';
+import Dropdown from './Dropdown';
 import './DatePicker.css';
 
 export default function BookingForm({ selectedType, handleTypeSelect, selectedDesk, getPrice, onSubmit }) {
@@ -10,7 +11,9 @@ export default function BookingForm({ selectedType, handleTypeSelect, selectedDe
     const [dateFrom, setDateFrom] = useState('');
     const [dateTo, setDateTo] = useState('');
     const [timeFrom, setTimeFrom] = useState('08:00');
-    const [timeTo, setTimeTo] = useState('12:00');
+    const [timeTo, setTimeTo] = useState('09:00');
+    const [location, setLocation] = useState('');
+    const [tariff, setTariff] = useState('1h');
 
     const timeFromOptions = ['08:00', '09:00', '10:00', '11:00', '12:00', '13:00', '14:00', '15:00', '16:00', '17:00'];
     const timeToOptions = ['09:00', '10:00', '11:00', '12:00', '13:00', '14:00', '15:00', '16:00', '17:00', '18:00', '19:00', '20:00'];
@@ -18,19 +21,32 @@ export default function BookingForm({ selectedType, handleTypeSelect, selectedDe
     const handleTimeFromChange = (e) => {
         const val = e.target.value;
         setTimeFrom(val);
-        if (val >= timeTo) {
-            const h = parseInt(val, 10);
-            setTimeTo(`${String(h + 1).padStart(2, '0')}:00`);
-        }
+        // Automatically calculate end time based on the current tariff
+        const durationMap = { '1h': 1, '4h': 4, '8h': 8 };
+        updateTimeRange(durationMap[tariff] || 1, val);
     };
 
-    const handleTimeToChange = (e) => {
-        const val = e.target.value;
-        setTimeTo(val);
-        if (val <= timeFrom) {
-            const h = parseInt(val, 10);
-            setTimeFrom(`${String(h - 1).padStart(2, '0')}:00`);
+    const handleTariffChange = (selectedTariff) => {
+        setTariff(selectedTariff);
+        const durationMap = { '1h': 1, '4h': 4, '8h': 8 };
+        updateTimeRange(durationMap[selectedTariff] || 1, timeFrom);
+    };
+
+    const updateTimeRange = (hours, startValStr) => {
+        const hFrom = parseInt(startValStr, 10);
+        let hTo = hFrom + hours;
+        
+        let newFrom = hFrom;
+        // If end time exceeds 20:00 (closing time), we must push the start time back
+        if (hTo > 20) {
+            hTo = 20;
+            newFrom = hTo - hours;
+            // Ensure we don't go before 08:00 (opening time)
+            if (newFrom < 8) newFrom = 8;
+            setTimeFrom(`${String(newFrom).padStart(2, '0')}:00`);
         }
+        
+        setTimeTo(`${String(hTo).padStart(2, '0')}:00`);
     };
 
     const handleSubmit = (e) => {
@@ -39,7 +55,9 @@ export default function BookingForm({ selectedType, handleTypeSelect, selectedDe
             dateFrom,
             dateTo: isOffice ? dateTo : dateFrom,
             timeFrom,
-            timeTo
+            timeTo,
+            location,
+            tariff
         });
     };
 
@@ -80,12 +98,17 @@ export default function BookingForm({ selectedType, handleTypeSelect, selectedDe
 
                 <div className="form-section">
                     <label className="form-label" htmlFor="location">Локация</label>
-                    <select id="location" className="form-select">
-                        <option value="">Выберите локацию</option>
-                        <option>CSBS Центр — ул. Тверская, 15</option>
-                        <option>CSBS Сити — Кутузовский пр-т, 2</option>
-                        <option>CSBS Парк — ул. Парковая, 8</option>
-                    </select>
+                    <Dropdown 
+                        options={[
+                            { value: '1', label: 'CSBS Центр — ул. Тверская, 15' },
+                            { value: '2', label: 'CSBS Сити — Кутузовский пр-т, 2' },
+                            { value: '3', label: 'CSBS Парк — ул. Парковая, 8' }
+                        ]}
+                        value={location}
+                        onChange={(val) => setLocation(val)}
+                        placeholder="Выберите локацию"
+                        id="location"
+                    />
                 </div>
 
                 {isOffice ? (
@@ -125,26 +148,39 @@ export default function BookingForm({ selectedType, handleTypeSelect, selectedDe
                                 placeholder="дд.мм.гггг"
                             />
                         </div>
-                        <div className="form-row">
                             <div className="form-section">
-                                <label className="form-label" htmlFor="time-from">Начало</label>
-                                <select id="time-from" className="form-select" value={timeFrom} onChange={handleTimeFromChange}>
-                                    {timeFromOptions.map(t => (
-                                        <option key={t} value={t}>{t}</option>
-                                    ))}
-                                </select>
+                                <label className="form-label">Тариф (продолжительность)</label>
+                                <Dropdown 
+                                    options={[
+                                        { value: '1h', label: '1 час' },
+                                        { value: '4h', label: '4 часа (Полдня)' },
+                                        { value: '8h', label: '8 часов (Полный день)' }
+                                    ]}
+                                    value={tariff}
+                                    onChange={handleTariffChange}
+                                    id="tariff-select"
+                                />
                             </div>
-                            <div className="form-section">
-                                <label className="form-label" htmlFor="time-to">Конец</label>
-                                <select id="time-to" className="form-select" value={timeTo} onChange={handleTimeToChange}>
-                                    {timeToOptions.map(t => (
-                                        <option key={t} value={t}>{t}</option>
-                                    ))}
-                                </select>
+                            
+                            <div className="form-row">
+                                <div className="form-section">
+                                    <label className="form-label" htmlFor="time-from">Начало</label>
+                                    <Dropdown 
+                                        options={timeFromOptions.map(t => ({ value: t, label: t }))}
+                                        value={timeFrom}
+                                        onChange={(val) => handleTimeFromChange({ target: { value: val } })}
+                                        id="time-from"
+                                    />
+                                </div>
+                                <div className="form-section">
+                                    <label className="form-label" htmlFor="time-to">Конец</label>
+                                    <div className="form-input-readonly">
+                                        {timeTo}
+                                    </div>
+                                </div>
                             </div>
-                        </div>
-                    </>
-                )}
+                        </>
+                    )}
 
 
 
@@ -158,7 +194,7 @@ export default function BookingForm({ selectedType, handleTypeSelect, selectedDe
                 <div className="form-summary">
                     <div className="summary-row">
                         <span>Стоимость</span>
-                        <span className="summary-price">{getPrice()}</span>
+                        <span className="summary-price">{getPrice(tariff, location)}</span>
                     </div>
                     {!selectedDesk && (
                         <div className="summary-row muted">

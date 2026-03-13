@@ -91,6 +91,13 @@ export const apiService = {
         return this.fetchWithAuth('/workspaces');
     },
 
+    async getTariffs() {
+        // Tariffs are public, no auth needed, but fetchWithAuth is fine or normal fetch
+        const res = await fetch(`${API_URL}/tariffs`);
+        if (!res.ok) throw new Error('Failed to fetch tariffs');
+        return res.json();
+    },
+
     async getReservations() {
         return this.fetchWithAuth('/reservations');
     },

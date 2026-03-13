@@ -162,3 +162,8 @@ export default function DatePicker({ id, value, onChange, min, placeholder = 'В
         </div>
     );
 }
+
+// Add these styles at the end or in a separate CSS file if preferred,
+// but for simplicity and since DatePicker explicitly imports its CSS,
+// I'll check where the main form styles are.
+

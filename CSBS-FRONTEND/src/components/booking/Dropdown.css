@@ -1,0 +1,96 @@
+.custom-dropdown-container {
+    position: relative;
+    width: 100%;
+}
+
+.custom-dropdown-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.8rem 1rem;
+    background-color: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 8px;
+    color: var(--color-text);
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-size: 0.95rem;
+}
+
+.custom-dropdown-header:hover {
+    background-color: rgba(255, 255, 255, 0.08);
+    border-color: rgba(255, 255, 255, 0.2);
+}
+
+.custom-dropdown-header.open {
+    border-color: var(--color-primary);
+    box-shadow: 0 0 0 1px var(--color-primary);
+}
+
+.custom-dropdown-header.placeholder {
+    color: rgba(255, 255, 255, 0.5);
+}
+
+.dropdown-icon {
+    color: rgba(255, 255, 255, 0.5);
+    transition: transform 0.2s ease;
+}
+
+.dropdown-icon.rotated {
+    transform: rotate(180deg);
+}
+
+.custom-dropdown-list {
+    position: absolute;
+    top: calc(100% + 4px);
+    left: 0;
+    right: 0;
+    background: rgba(16, 20, 30, 0.95);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 8px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+    z-index: 100;
+    max-height: 250px;
+    overflow-y: auto;
+    padding: 4px;
+}
+
+/* Custom Scrollbar for Dropdown List */
+.custom-dropdown-list::-webkit-scrollbar {
+    width: 6px;
+}
+
+.custom-dropdown-list::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 4px;
+}
+
+.custom-dropdown-list::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 4px;
+}
+
+.custom-dropdown-list::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.3);
+}
+
+.custom-dropdown-item {
+    padding: 0.8rem 1rem;
+    color: var(--color-text);
+    cursor: pointer;
+    border-radius: 6px;
+    transition: all 0.2s ease;
+    font-size: 0.95rem;
+}
+
+.custom-dropdown-item:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+}
+
+.custom-dropdown-item.selected {
+    background-color: rgba(var(--color-primary-rgb), 0.2);
+    color: var(--color-primary);
+    font-weight: 500;
+}

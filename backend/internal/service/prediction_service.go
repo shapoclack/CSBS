@@ -2,6 +2,7 @@ package service
 
 import (
 	"csbs/backend/pkg/gemini"
+	"csbs/backend/pkg/logger"
 	"fmt"
 	"strings"
 )
@@ -21,6 +22,7 @@ func NewPredictionService(geminiClient *gemini.GeminiClient) PredictionService {
 }
 
 func (s *PredictionServiceImpl) GetWorkloadPrediction(dayOfWeek string) (string, error) {
+	logger.Info.Printf("Service: Requesting workload prediction for day: %s", dayOfWeek)
 	// 1. Формируем контекст (промпт) для Gemini
 	// В реальном проекте тут был бы запрос в БД, например s.reservationRepo.GetStatsFunc()
 	prompt := fmt.Sprintf(`
@@ -54,8 +56,10 @@ func (s *PredictionServiceImpl) GetWorkloadPrediction(dayOfWeek string) (string,
 	// 2. Отправляем запрос через наш клиент
 	response, err := s.geminiClient.GenerateContent(prompt)
 	if err != nil {
+		logger.Error.Printf("Service: Gemini prediction error for %s: %v", dayOfWeek, err)
 		return "", fmt.Errorf("ошибка получения ответа от Gemini: %w", err)
 	}
+	logger.Info.Printf("Service: Successfully received prediction for %s", dayOfWeek)
 
 	// 3. Возвращаем результат
 	// Так как мы явно попросили JSON без маркдауна, ответ должен быть готов к отправке

@@ -3,6 +3,7 @@ package service
 import (
 	"csbs/backend/internal/models"
 	"csbs/backend/internal/repository"
+	"csbs/backend/pkg/logger"
 	"errors"
 
 	"github.com/golang-jwt/jwt/v5"
@@ -27,9 +28,11 @@ func NewUserService(repo repository.UserRepository) UserService {
 }
 
 func (s *userServiceImpl) Register(name, email, password string) (*models.User, error) {
+	logger.Info.Printf("Service: Attempting to register user with email: %s", email)
 	// 1. Проверяем, не занят ли email
 	existing, _ := s.repo.FindByEmail(email)
 	if existing.ID != 0 {
+		logger.Warn.Printf("Service: Registration failed, email %s already in use", email)
 		return nil, errors.New("пользователь с таким email уже существует")
 	}
 	// 2. Хэшируем пароль
@@ -51,20 +54,29 @@ func (s *userServiceImpl) Register(name, email, password string) (*models.User, 
 		RoleID:       &role.ID,
 	}
 	err = s.repo.Create(user)
+	if err == nil {
+		logger.Info.Printf("Service: Successfully registered user with email: %s", email)
+	} else {
+		logger.Error.Printf("Service: Failed to register user %s: %v", email, err)
+	}
 	return user, err
 }
 
 func (s *userServiceImpl) Login(email, password string) (string, error) {
+	logger.Info.Printf("Service: Login attempt for email: %s", email)
 	// 1. Ищем пользователя по email
 	user, err := s.repo.FindByEmail(email)
 	if err != nil {
+		logger.Warn.Printf("Service: Login failed for %s - user not found", email)
 		return "", errors.New("неверный email или пароль")
 	}
 	// 2. Сравниваем хэш пароля с введённым паролем
 	err = bcrypt.CompareHashAndPassword([]byte(user.PasswordHash), []byte(password))
 	if err != nil {
+		logger.Warn.Printf("Service: Login failed for %s - invalid password", email)
 		return "", errors.New("неверный email или пароль")
 	}
+	logger.Info.Printf("Service: User %s logged in successfully", email)
 	// 3. Генерируем JWT токен
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
 		"user_id": user.ID,
@@ -80,6 +92,7 @@ func (s *userServiceImpl) Login(email, password string) (string, error) {
 }
 
 func (s *userServiceImpl) GetUserByID(id uint) (*models.User, error) {
+	logger.Info.Printf("Service: Fetching user by ID: %d", id)
 	user, err := s.repo.FindByID(id)
 	if err != nil {
 		return nil, errors.New("пользователь не найден")
@@ -90,6 +103,7 @@ func (s *userServiceImpl) GetUserByID(id uint) (*models.User, error) {
 }
 
 func (s *userServiceImpl) GetAllUsers() ([]models.User, error) {
+	logger.Info.Println("Service: Requesting all users")
 	return s.repo.GetAll()
 }
 

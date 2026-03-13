@@ -28,6 +28,9 @@ func main() {
 
 	cfg := config.Load()
 
+	// Создаём базу данных, если она не существует
+	config.EnsureDatabaseExists(cfg)
+
 	dsn := fmt.Sprintf("host=%s user=%s password=%s dbname=%s port=%s sslmode=disable TimeZone=Europe/Moscow",
 		cfg.DBHost, cfg.DBUser, cfg.DBPassword, cfg.DBName, cfg.DBPort)
 
@@ -74,7 +77,7 @@ func main() {
 	categoryService := service.NewCategoryService(categoryRepo)
 	amenityService := service.NewAmenityService(amenityRepo)
 	auditLogService := service.NewAuditLogService(auditRepo)
-	
+
 	geminiClient := gemini.NewClient(cfg.GeminiAPIKey)
 	predictionService := service.NewPredictionService(geminiClient)
 
@@ -105,7 +108,7 @@ func main() {
 	r.Get("/", func(w http.ResponseWriter, r *http.Request) {
 		w.Write([]byte("Hello World"))
 	})
-	
+
 	r.Route("/api", func(r chi.Router) {
 		r.Mount("/workspaces", workspaceHandler.Routes())
 		r.Mount("/users", userHandler.Routes())
@@ -155,15 +158,12 @@ func seedDatabase(db *gorm.DB) {
 
 	db.Model(&models.Tariff{}).Count(&count)
 	if count == 0 {
-		// Location 1 (Центр)
-		db.Create(&models.Tariff{Name: "Почасовой (Центр)", Price: 500, DurationMinutes: 60, LocationID: 1})
-		db.Create(&models.Tariff{Name: "Полный день (Центр)", Price: 2500, DurationMinutes: 1440, LocationID: 1})
-		// Location 2 (Сити)
-		db.Create(&models.Tariff{Name: "Почасовой VIP (Сити)", Price: 800, DurationMinutes: 60, LocationID: 2})
-		db.Create(&models.Tariff{Name: "Полный день (Сити)", Price: 4000, DurationMinutes: 1440, LocationID: 2})
-		// Location 3 (Парк)
-		db.Create(&models.Tariff{Name: "Почасовой Eco (Парк)", Price: 400, DurationMinutes: 60, LocationID: 3})
-		db.Create(&models.Tariff{Name: "Полный день (Парк)", Price: 1800, DurationMinutes: 1440, LocationID: 3})
+		// Создаем 3 базовых тарифа для каждой из 3 локаций
+		for i := uint(1); i <= 3; i++ {
+			db.Create(&models.Tariff{Name: "1 час", Price: 500, DurationMinutes: 60, LocationID: i})
+			db.Create(&models.Tariff{Name: "4 часа (Полдня)", Price: 1900, DurationMinutes: 240, LocationID: i})
+			db.Create(&models.Tariff{Name: "8 часов (Полный день)", Price: 3600, DurationMinutes: 480, LocationID: i})
+		}
 	}
 
 	db.Model(&models.Service{}).Count(&count)
@@ -176,7 +176,7 @@ func seedDatabase(db *gorm.DB) {
 
 	db.Model(&models.Workspace{}).Count(&count)
 	if count == 0 {
-		// LOCATION 1: CSBS Центр 
+		// LOCATION 1: CSBS Центр
 		for i := 1; i <= 16; i++ {
 			db.Create(&models.Workspace{NameOrNumber: fmt.Sprintf("A%d", i), CategoryID: 1, LocationID: 1, Capacity: 1})
 		}
