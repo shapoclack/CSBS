@@ -1,0 +1,217 @@
+.auth-modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background-color: rgba(10, 15, 20, 0.85);
+    backdrop-filter: blur(8px);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+    
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+    transition: opacity var(--transition-smooth), visibility var(--transition-smooth);
+}
+
+.auth-modal-overlay.open {
+    opacity: 1;
+    visibility: visible;
+    pointer-events: auto;
+}
+
+.auth-modal {
+    width: 100%;
+    max-width: 450px;
+    padding: 2.5rem;
+    position: relative;
+    border: 1px solid var(--color-accent);
+    box-shadow: 0 0 30px rgba(0, 166, 192, 0.15);
+    transform: scale(0.95);
+    transition: transform var(--transition-smooth);
+}
+
+.auth-modal-overlay.open .auth-modal {
+    transform: scale(1);
+}
+
+.auth-close-btn {
+    position: absolute;
+    top: 1.5rem;
+    right: 1.5rem;
+    background: transparent;
+    border: none;
+    color: var(--color-text-muted);
+    cursor: pointer;
+    transition: color var(--transition-fast);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.auth-close-btn:hover {
+    color: var(--color-accent);
+}
+
+.auth-header {
+    text-align: center;
+    margin-bottom: 2rem;
+}
+
+.auth-header h2 {
+    font-size: 2rem;
+    color: #fff;
+    margin-bottom: 0.5rem;
+}
+
+.auth-header p {
+    color: var(--color-text-muted);
+    font-size: 1rem;
+}
+
+.auth-form {
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+}
+
+.form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    text-align: left;
+}
+
+.form-group label {
+    font-size: 0.9rem;
+    font-weight: 500;
+    color: var(--color-text-main);
+}
+
+.input-with-icon {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.input-icon {
+    position: absolute;
+    left: 1rem;
+    color: var(--color-text-muted);
+}
+
+.input-with-icon input {
+    width: 100%;
+    padding: 0.85rem 2.75rem; /* Padding for left icon and potential right icon */
+    background-color: rgba(0, 0, 0, 0.2);
+    border: 1px solid var(--color-border);
+    border-radius: 8px;
+    color: #fff;
+    font-family: inherit;
+    font-size: 1rem;
+    transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
+}
+
+.input-with-icon input:focus {
+    outline: none;
+    border-color: var(--color-accent);
+    box-shadow: 0 0 0 2px rgba(0, 166, 192, 0.2);
+}
+
+.input-with-icon input.input-error {
+    border-color: #ff4a4a;
+}
+
+.input-with-icon input.input-error:focus {
+    box-shadow: 0 0 0 2px rgba(255, 74, 74, 0.2);
+}
+
+.input-with-icon input::placeholder {
+    color: rgba(255, 255, 255, 0.3);
+}
+
+.password-toggle-btn {
+    position: absolute;
+    right: 1rem;
+    background: transparent;
+    border: none;
+    color: var(--color-text-muted);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all var(--transition-fast);
+    padding: 0;
+}
+
+.password-toggle-btn:hover {
+    color: #fff;
+}
+
+.error-text {
+    color: #ff4a4a;
+    font-size: 0.8rem;
+    margin-top: -0.25rem;
+    font-weight: 500;
+}
+
+.btn-submit {
+    margin-top: 1rem;
+    width: 100%;
+    padding: 1rem;
+    font-size: 1.05rem;
+}
+
+/* Added Slider Animations */
+.auth-toggle-slider {
+    position: relative;
+    display: flex;
+    background-color: rgba(255, 255, 255, 0.05);
+    border-radius: 999px;
+    padding: 6px;
+    margin-bottom: 2rem;
+    box-shadow: inset 0 2px 5px rgba(0, 0, 0, 0.2);
+}
+
+.slider-bg {
+    position: absolute;
+    top: 6px;
+    bottom: 6px;
+    width: calc(50% - 6px);
+    background-color: var(--color-accent);
+    border-radius: 999px;
+    transition: transform var(--transition-smooth);
+    box-shadow: var(--shadow-accent);
+}
+
+.slider-bg.left {
+    transform: translateX(0);
+}
+
+.slider-bg.right {
+    transform: translateX(100%);
+}
+
+.slider-option {
+    flex: 1;
+    position: relative;
+    z-index: 1;
+    background: transparent;
+    border: none;
+    padding: 0.6rem 0;
+    font-size: 1rem;
+    font-weight: 500;
+    color: var(--color-text-main);
+    cursor: pointer;
+    transition: color var(--transition-fast);
+    font-family: inherit;
+    border-radius: 999px;
+}
+
+.slider-option.active {
+    color: #1a1f26; /* Dark text for contrast against the accent color */
+    font-weight: 600;
+}
