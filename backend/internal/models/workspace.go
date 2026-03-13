@@ -13,6 +13,9 @@ type Workspace struct {
 	CategoryID uint
 	Category   WorkspaceCategory `gorm:"foreignKey:CategoryID"`
 
+	LocationID uint
+	Location   Location `gorm:"foreignKey:LocationID"`
+
 	NameOrNumber   string    `gorm:"size:100;not null"`
 	Capacity       int       `gorm:"not null"`
 	IsActive       bool      `gorm:"not null;default:true"`

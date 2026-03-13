@@ -20,6 +20,13 @@ func (h *UserHandler) Routes() http.Handler {
 	r := chi.NewRouter()
 	r.Post("/register", h.register)
 	r.Post("/login", h.login)
+
+	// Protected routes
+	r.Group(func(r chi.Router) {
+		r.Use(AuthMiddleware)
+		r.Get("/me", h.getMe)
+	})
+
 	return r
 }
 
@@ -68,4 +75,17 @@ func (h *UserHandler) login(w http.ResponseWriter, r *http.Request) {
 	}
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(map[string]string{"token": token})
+}
+
+func (h *UserHandler) getMe(w http.ResponseWriter, r *http.Request) {
+	userID := r.Context().Value(UserIDKey).(uint)
+
+	user, err := h.service.GetUserByID(userID)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusNotFound)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(user)
 }

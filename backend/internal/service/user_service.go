@@ -12,6 +12,7 @@ import (
 type UserService interface {
 	Register(name, email, password string) (*models.User, error)
 	Login(email, password string) (string, error)
+	GetUserByID(id uint) (*models.User, error)
 }
 type userServiceImpl struct {
 	repo repository.UserRepository
@@ -63,4 +64,14 @@ func (s *userServiceImpl) Login(email, password string) (string, error) {
 		return "", err
 	}
 	return tokenString, nil
+}
+
+func (s *userServiceImpl) GetUserByID(id uint) (*models.User, error) {
+	user, err := s.repo.FindByID(id)
+	if err != nil {
+		return nil, errors.New("пользователь не найден")
+	}
+	// Hide sensitive info like password hash
+	user.PasswordHash = ""
+	return user, nil
 }
