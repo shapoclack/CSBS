@@ -21,9 +21,9 @@ import (
 
 func main() {
 
-	err := godotenv.Load("../../.env")
+	err := godotenv.Load(".env")
 	if err != nil {
-		log.Fatalf("Error loading .env file: %v", err)
+		log.Printf("Warning: .env file not found, using system environment variables")
 	}
 
 	cfg := config.Load()

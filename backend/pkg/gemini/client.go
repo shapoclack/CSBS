@@ -37,8 +37,8 @@ type geminiPart struct {
 
 // GenerateContent - отправляет промпт и возвращает ответ текстом
 func (c *GeminiClient) GenerateContent(prompt string) (string, error) {
-	// URL для модели gemini-2.0-flash
-	url := fmt.Sprintf("https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=%s", c.apiKey)
+	// URL для модели gemini-2.5-flash
+	url := fmt.Sprintf("https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=%s", c.apiKey)
 
 	// Формируем тело запроса
 	reqBody := geminiRequest{

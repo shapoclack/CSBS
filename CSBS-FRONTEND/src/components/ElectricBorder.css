@@ -1,0 +1,59 @@
+/* файл: src/components/ElectricBorder.css */
+.electric-border-wrapper {
+  position: relative;
+  border-radius: 16px; /* Радиус как у ваших карточек */
+  padding: 2px; /* Толщина электрической рамки */
+  background: transparent;
+  overflow: hidden;
+  z-index: 1;
+  height: 100%; /* Чтобы карточки в сетке оставались ровными */
+  transition: transform var(--transition-smooth, 0.3s), box-shadow var(--transition-smooth, 0.3s);
+}
+
+/* Сам вращающийся луч */
+.electric-border-wrapper::before {
+  content: '';
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: conic-gradient(
+    transparent,
+    transparent,
+    transparent,
+    var(--color-accent, #00a6c0),
+    #c0f4ff,
+    var(--color-accent, #00a6c0)
+  );
+  animation: spin-electric 2.5s linear infinite;
+  opacity: 0; /* Скрыто по умолчанию */
+  transition: opacity 0.3s ease;
+  z-index: -1;
+}
+
+/* Показываем эффект ТОЛЬКО при наведении */
+.electric-border-wrapper:hover::before {
+  opacity: 1;
+}
+
+/* Поднятие карточки при наведении берем на себя */
+.electric-border-wrapper:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 10px 25px rgba(0, 166, 192, 0.3);
+}
+
+.electric-border-content {
+  /* Непрозрачный фон, чтобы луч не просвечивал сквозь центр карточки */
+  background-color: var(--color-bg-card, #1a1f26);
+  border-radius: 14px; /* Чуть меньше внешней рамки (16px - 2px) */
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+@keyframes spin-electric {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
