@@ -7,6 +7,7 @@ import (
 	"csbs/backend/internal/repository"
 	"csbs/backend/internal/service"
 	"csbs/backend/pkg/gemini"
+	"csbs/backend/pkg/logger"
 	"fmt"
 	"log"
 	"net/http"
@@ -79,7 +80,10 @@ func main() {
 	auditLogService := service.NewAuditLogService(auditRepo)
 
 	geminiClient := gemini.NewClient(cfg.GeminiAPIKey)
-	predictionService := service.NewPredictionService(geminiClient)
+	predictionService, err := service.NewPredictionService(geminiClient, "workload_model.txt")
+	if err != nil {
+		logger.Error.Fatalf("Не удалось инициализировать Prediction Service: %v", err)
+	}
 
 	// Handlers
 	locationHandler := handlers.NewLocationHandler(locationService)
