@@ -362,7 +362,7 @@
 
 .desk.free:hover {
     border-color: var(--color-accent);
-    color: var(--color-accent);
+    background-color: rgba(0, 166, 192, 0.1);
     transform: translateY(-2px);
 }
 
