@@ -11,6 +11,7 @@ import (
 
 type PredictionService interface {
 	GetWorkloadPrediction(dayOfWeek string) (string, error)
+	GetWeeklyWorkload() map[string]float64
 }
 
 type PredictionServiceImpl struct {
@@ -112,4 +113,28 @@ func (s *PredictionServiceImpl) GetWorkloadPrediction(dayOfWeek string) (string,
 
 	logger.Info.Printf("Service: Successfully received LLM response for %s", dayOfWeek)
 	return response, nil
+}
+
+func (s *PredictionServiceImpl) GetWeeklyWorkload() map[string]float64 {
+	days := []string{"понедельник", "вторник", "среда", "четверг", "пятница", "суббота", "воскресенье"}
+	workload := make(map[string]float64)
+
+	for _, day := range days {
+		features, err := getFeaturesForDay(day)
+		if err != nil {
+			logger.Error.Printf("GetWeeklyWorkload error getting features for day %s: %v\n", day, err)
+			continue
+		}
+
+		prediction := s.model.PredictSingle(features, 0)
+		if prediction < 0 {
+			prediction = 0
+		}
+		if prediction > 100 {
+			prediction = 100
+		}
+		workload[day] = prediction
+	}
+
+	return workload
 }

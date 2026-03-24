@@ -96,7 +96,10 @@ func main() {
 	adminHandler := handlers.NewAdminHandler(userService)
 	auditLogHandler := handlers.NewAuditLogHandler(auditLogService)
 	predictionHandler := handlers.NewPredictionHandler(predictionService)
-	chatHandler := handlers.NewChatHandler(geminiClient)
+	if predictionService == nil {
+		log.Fatalf("Ошибка: predictionService is nil!")
+	}
+	chatHandler := handlers.NewChatHandler(geminiClient, predictionService)
 
 	r := chi.NewRouter()
 	// Middleware
@@ -166,9 +169,9 @@ func seedDatabase(db *gorm.DB) {
 	if count == 0 {
 		// Создаем 3 базовых тарифа для каждой из 3 локаций
 		for i := uint(1); i <= 3; i++ {
-			db.Create(&models.Tariff{Name: "1 час", Price: 500, DurationMinutes: 60, LocationID: i})
-			db.Create(&models.Tariff{Name: "4 часа (Полдня)", Price: 1900, DurationMinutes: 240, LocationID: i})
-			db.Create(&models.Tariff{Name: "8 часов (Полный день)", Price: 3600, DurationMinutes: 480, LocationID: i})
+			db.Create(&models.Tariff{Name: "1 час", Price: 175, DurationMinutes: 60, LocationID: i})
+			db.Create(&models.Tariff{Name: "4 часа (Полдня)", Price: 700, DurationMinutes: 240, LocationID: i})
+			db.Create(&models.Tariff{Name: "8 часов (Полный день)", Price: 1400, DurationMinutes: 480, LocationID: i})
 		}
 	}
 
