@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import { Bot, Send, User } from 'lucide-react';
+import { Bot, Send, User, Loader2 } from 'lucide-react';
+import { apiService } from '../services/api';
 import './AiChat.css';
 
 export default function AiChat() {
@@ -7,22 +8,32 @@ export default function AiChat() {
         { role: 'ai', content: 'Здравствуйте! Я ваш ИИ-помощник. Ищете идеальное рабочее место, хотите проверить доступность или узнать прогноз цен на ближайшие даты?' }
     ]);
     const [input, setInput] = useState('');
+    const [isLoading, setIsLoading] = useState(false);
 
-    const handleSend = () => {
-        if (!input.trim()) return;
+    const handleSend = async () => {
+        if (!input.trim() || isLoading) return;
 
-        // Add user message
-        const newMessages = [...messages, { role: 'user', content: input }];
+        const userMessage = input;
+        const newMessages = [...messages, { role: 'user', content: userMessage }];
         setMessages(newMessages);
         setInput('');
+        setIsLoading(true);
 
-        // Simulate AI response
-        setTimeout(() => {
+        try {
+            const data = await apiService.sendAiMessage(userMessage);
             setMessages(msgs => [...msgs, {
                 role: 'ai',
-                content: `Я проанализировал ваш запрос: "${input}". Наш ИИ прогнозирует, что цены на премиум-места вырастут на 15% в следующем месяце. Хотите, чтобы я забронировал для вас тихое место с быстрым Wi-Fi прямо сейчас?`
+                content: data.reply
             }]);
-        }, 1000);
+        } catch (error) {
+            console.error(error);
+            setMessages(msgs => [...msgs, {
+                role: 'ai',
+                content: 'Ошибка соединения с сервером.'
+            }]);
+        } finally {
+            setIsLoading(false);
+        }
     };
 
     const handleKeyDown = (e) => {
@@ -52,6 +63,14 @@ export default function AiChat() {
                             </div>
                         </div>
                     ))}
+                    {isLoading && (
+                        <div className="message-wrapper ai">
+                            <div className="message-bubble">
+                                <Bot size={16} className="message-icon" />
+                                <Loader2 className="animate-spin" size={16} />
+                            </div>
+                        </div>
+                    )}
                 </div>
 
                 <div className="chat-input-area">
@@ -62,8 +81,9 @@ export default function AiChat() {
                         value={input}
                         onChange={(e) => setInput(e.target.value)}
                         onKeyDown={handleKeyDown}
+                        disabled={isLoading}
                     />
-                    <button className="btn-send" onClick={handleSend}>
+                    <button className="btn-send" onClick={handleSend} disabled={isLoading}>
                         <Send size={20} />
                     </button>
                 </div>

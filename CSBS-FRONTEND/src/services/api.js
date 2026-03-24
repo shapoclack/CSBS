@@ -107,5 +107,12 @@ export const apiService = {
             method: 'POST',
             body: JSON.stringify(data)
         });
+    },
+
+    async sendAiMessage(message) {
+        return this.fetchWithAuth('/chat', {
+            method: 'POST',
+            body: JSON.stringify({ message })
+        });
     }
 };

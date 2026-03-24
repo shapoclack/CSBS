@@ -96,6 +96,7 @@ func main() {
 	adminHandler := handlers.NewAdminHandler(userService)
 	auditLogHandler := handlers.NewAuditLogHandler(auditLogService)
 	predictionHandler := handlers.NewPredictionHandler(predictionService)
+	chatHandler := handlers.NewChatHandler(geminiClient)
 
 	r := chi.NewRouter()
 	// Middleware
@@ -124,6 +125,7 @@ func main() {
 		r.Mount("/admin", adminHandler.Routes())
 		r.Mount("/auditlogs", auditLogHandler.Routes())
 		r.Mount("/predictions", predictionHandler.Routes())
+		r.Mount("/chat", chatHandler.Routes())
 	})
 
 	// Call seeder
