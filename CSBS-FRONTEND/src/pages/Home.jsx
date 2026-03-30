@@ -3,6 +3,7 @@ import { Search, MapPin, Wifi, Coffee, Users, Printer, Clock, Star, ChevronDown,
 import { Link } from 'react-router-dom';
 import Squares from './Squares';
 import ElectricBorder from '../components/ElectricBorder';
+import CircularGallery from '../components/CircularGallery/CircularGallery';
 import './Home.css';
 
 // Import local assets
@@ -237,18 +238,24 @@ export default function Home() {
             </section>
 
             {/* GALLERY SECTION */}
-            <section className="gallery-section">
-                <div className="container">
+            <section className="gallery-section" style={{ height: '600px', position: 'relative' }}>
+                <div className="container" style={{ position: 'relative', zIndex: 1, pointerEvents: 'none' }}>
                     <div className="section-header">
                         <h2>Пространство</h2>
                     </div>
-                    <div className="gallery-grid">
-                        {gallery.map((img, index) => (
-                            <div key={index} className="gallery-item">
-                                <img src={img} alt={`Интерьер коворкинга ${index + 1}`} className="gallery-img" />
-                            </div>
-                        ))}
-                    </div>
+                </div>
+                <div style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%' }}>
+                    <CircularGallery
+                        bend={3}
+                        textColor="#ffffff"
+                        borderRadius={0.05}
+                        items={[
+                            { image: space1, text: 'Открытое пространство' },
+                            { image: space2, text: 'Переговорная' },
+                            { image: space3, text: 'Небольшой офис' },
+                            { image: space4, text: 'Лаунж-зона' }
+                        ]}
+                    />
                 </div>
             </section>
 
