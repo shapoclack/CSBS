@@ -2,12 +2,28 @@ package handlers
 
 import (
 	"csbs/backend/internal/api/middleware"
+	"csbs/backend/internal/models"
 	"csbs/backend/internal/service"
 	"encoding/json"
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
 )
+
+// roleMapping converts internal role names to frontend-expected values
+var roleMapping = map[string]string{
+	models.RoleUser:        "client",
+	models.RoleCoworkAdmin: "manager",
+	models.RoleSystemAdmin: "sysadmin",
+}
+
+type userDTO struct {
+	ID    uint   `json:"id"`
+	Name  string `json:"name"`
+	Email string `json:"email"`
+	Phone string `json:"phone"`
+	Role  string `json:"role"`
+}
 
 type UserHandler struct {
 	service service.UserService
@@ -34,6 +50,7 @@ func (h *UserHandler) Routes() http.Handler {
 type registerRequest struct {
 	Name     string `json:"name"`
 	Email    string `json:"email"`
+	Phone    string `json:"phone"`
 	Password string `json:"password"`
 }
 
@@ -46,7 +63,7 @@ func (h *UserHandler) register(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	user, err := h.service.Register(req.Name, req.Email, req.Password)
+	user, err := h.service.Register(req.Name, req.Email, req.Phone, req.Password)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
@@ -87,6 +104,19 @@ func (h *UserHandler) getMe(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	role := roleMapping[user.Role.Name]
+	if role == "" {
+		role = "client" // fallback
+	}
+
+	dto := userDTO{
+		ID:    user.ID,
+		Name:  user.FullName,
+		Email: user.Email,
+		Phone: user.Phone,
+		Role:  role,
+	}
+
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(user)
+	json.NewEncoder(w).Encode(dto)
 }

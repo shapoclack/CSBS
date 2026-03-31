@@ -11,7 +11,7 @@ import (
 )
 
 type UserService interface {
-	Register(name, email, password string) (*models.User, error)
+	Register(name, email, phone, password string) (*models.User, error)
 	Login(email, password string) (string, error)
 	GetUserByID(id uint) (*models.User, error)
 	GetAllUsers() ([]models.User, error)
@@ -27,7 +27,7 @@ func NewUserService(repo repository.UserRepository) UserService {
 	return &userServiceImpl{repo: repo}
 }
 
-func (s *userServiceImpl) Register(name, email, password string) (*models.User, error) {
+func (s *userServiceImpl) Register(name, email, phone, password string) (*models.User, error) {
 	logger.Info.Printf("Service: Attempting to register user with email: %s", email)
 	// 1. Проверяем, не занят ли email
 	existing, _ := s.repo.FindByEmail(email)
@@ -49,6 +49,7 @@ func (s *userServiceImpl) Register(name, email, password string) (*models.User, 
 	user := &models.User{
 		FullName:     name,
 		Email:        email,
+		Phone:        phone,
 		PasswordHash: string(hashedPassword),
 		Status:       "активен",
 		RoleID:       &role.ID,
