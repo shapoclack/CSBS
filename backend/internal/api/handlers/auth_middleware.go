@@ -12,15 +12,20 @@ import (
 
 func AuthMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		// 1. Достаём заголовок Authorization
-		authHeader := r.Header.Get("Authorization")
-		if authHeader == "" {
-			http.Error(w, "Отсутствует токен авторизации", http.StatusUnauthorized)
-			return
+		// 1. Достаём токен из куки
+		cookie, err := r.Cookie("auth_token")
+		if err != nil {
+			// Откат: если нет куки, проверим Authorization заголовок для обратной совместимости 
+			authHeader := r.Header.Get("Authorization")
+			if authHeader == "" {
+				http.Error(w, "Отсутствует токен авторизации", http.StatusUnauthorized)
+				return
+			}
+			cookie = &http.Cookie{Value: strings.TrimPrefix(authHeader, "Bearer ")}
 		}
-		// 2. Убираем префикс "Bearer " из заголовка
-		tokenString := strings.TrimPrefix(authHeader, "Bearer ")
-		// 3. Парсим и проверяем токен
+
+		tokenString := cookie.Value
+		// 2. Парсим и проверяем токен
 		token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
 			return []byte("my-secret-key"), nil
 		})
@@ -28,7 +33,7 @@ func AuthMiddleware(next http.Handler) http.Handler {
 			http.Error(w, "Невалидный токен", http.StatusUnauthorized)
 			return
 		}
-		// 4. Достаём user_id и role из токена и кладём в контекст запроса
+		// 3. Достаём user_id и role из токена и кладём в контекст запроса
 		claims := token.Claims.(jwt.MapClaims)
 		userID := uint(claims["user_id"].(float64))
         

@@ -37,6 +37,7 @@ func (h *UserHandler) Routes() http.Handler {
 	r := chi.NewRouter()
 	r.Post("/register", h.register)
 	r.Post("/login", h.login)
+	r.Post("/logout", h.logout)
 
 	// Protected routes
 	r.Group(func(r chi.Router) {
@@ -91,8 +92,36 @@ func (h *UserHandler) login(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusUnauthorized)
 		return
 	}
+
+	http.SetCookie(w, &http.Cookie{
+		Name:     "auth_token",
+		Value:    token,
+		Path:     "/",
+		HttpOnly: true,
+		Secure:   false, // set to true in production with HTTPS
+		SameSite: http.SameSiteLaxMode,
+		MaxAge:   3600 * 24, // 24 hours
+	})
+
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(map[string]string{"token": token})
+	// Still return token in json for backward compatibility if needed, 
+	// though frontend will now ignore it.
+	json.NewEncoder(w).Encode(map[string]string{"token": token, "message": "logged in successfully"})
+}
+
+func (h *UserHandler) logout(w http.ResponseWriter, r *http.Request) {
+	http.SetCookie(w, &http.Cookie{
+		Name:     "auth_token",
+		Value:    "",
+		Path:     "/",
+		HttpOnly: true,
+		Secure:   false, // same as login
+		SameSite: http.SameSiteLaxMode,
+		MaxAge:   -1, // deletes the cookie
+	})
+	
+	w.WriteHeader(http.StatusOK)
+	w.Write([]byte("logged out successfully"))
 }
 
 func (h *UserHandler) getMe(w http.ResponseWriter, r *http.Request) {
