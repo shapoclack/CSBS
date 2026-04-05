@@ -5,6 +5,7 @@ import (
 	"csbs/backend/internal/repository"
 	"csbs/backend/pkg/logger"
 	"errors"
+	"time"
 
 	"github.com/golang-jwt/jwt/v5"
 	"golang.org/x/crypto/bcrypt"
@@ -20,11 +21,12 @@ type UserService interface {
 }
 
 type userServiceImpl struct {
-	repo repository.UserRepository
+	repo      repository.UserRepository
+	auditRepo repository.AuditRepository
 }
 
-func NewUserService(repo repository.UserRepository) UserService {
-	return &userServiceImpl{repo: repo}
+func NewUserService(repo repository.UserRepository, auditRepo repository.AuditRepository) UserService {
+	return &userServiceImpl{repo: repo, auditRepo: auditRepo}
 }
 
 func (s *userServiceImpl) Register(name, email, phone, password, requestedRole string) (*models.User, error) {
@@ -121,7 +123,16 @@ func (s *userServiceImpl) UpdateUserStatus(id uint, status string) error {
 		return err
 	}
 	user.Status = status
-	return s.repo.Update(user)
+	err = s.repo.Update(user)
+	if err == nil {
+		s.auditRepo.Create(&models.AuditLog{
+			Action:     "Update Status",
+			EntityType: "User",
+			EntityID:   id,
+			Timestamp:  time.Now(),
+		})
+	}
+	return err
 }
 
 func (s *userServiceImpl) UpdateUserRole(id uint, roleName string) error {
@@ -135,5 +146,14 @@ func (s *userServiceImpl) UpdateUserRole(id uint, roleName string) error {
 		return errors.New("такой роли не существует")
 	}
 	user.RoleID = &newRole.ID
-	return s.repo.Update(user)
+	err = s.repo.Update(user)
+	if err == nil {
+		s.auditRepo.Create(&models.AuditLog{
+			Action:     "Update Role",
+			EntityType: "User",
+			EntityID:   id,
+			Timestamp:  time.Now(),
+		})
+	}
+	return err
 }

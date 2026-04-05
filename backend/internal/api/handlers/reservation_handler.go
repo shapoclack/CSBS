@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"csbs/backend/internal/api/middleware"
+	"csbs/backend/internal/models"
 	"csbs/backend/internal/service"
 	"encoding/json"
 	"net/http"
@@ -23,6 +24,11 @@ func (h *ReservationHandler) Routes() http.Handler {
 	r.Use(AuthMiddleware) // Все эндпоинты бронирований защищены JWT!
 	r.Post("/", h.create)
 	r.Get("/", h.getUserReservations)
+
+	// Админский роут: получить ВСЕ бронирования
+	r.With(middleware.RequireRole(models.RoleCoworkAdmin, models.RoleSystemAdmin)).
+		Get("/all", h.getAllReservations)
+
 	return r
 }
 
@@ -62,6 +68,17 @@ func (h *ReservationHandler) getUserReservations(w http.ResponseWriter, r *http.
 	userID := r.Context().Value(middleware.UserIDKey).(uint)
 
 	reservations, err := h.service.GetUserReservations(userID)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(reservations)
+}
+
+func (h *ReservationHandler) getAllReservations(w http.ResponseWriter, r *http.Request) {
+	reservations, err := h.service.GetAllReservations()
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return

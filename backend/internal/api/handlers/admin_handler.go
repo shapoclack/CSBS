@@ -66,7 +66,7 @@ func (h *AdminHandler) updateUserStatus(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	w.WriteHeader(http.StatusOK)
+	w.WriteHeader(http.StatusNoContent)
 }
 
 type updateRoleReq struct {
@@ -85,5 +85,5 @@ func (h *AdminHandler) updateUserRole(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	w.WriteHeader(http.StatusOK)
+	w.WriteHeader(http.StatusNoContent)
 }

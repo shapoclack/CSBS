@@ -10,6 +10,7 @@ import (
 type ReservationRepository interface {
 	Create(reservation *models.Reservation) error
 	GetByUserID(userID uint) ([]models.Reservation, error)
+	GetAll() ([]models.Reservation, error)
 	HasConflict(workspaceID uint, startTime, endTime time.Time) (bool, error)
 }
 type reservationRepositoryImpl struct {
@@ -29,6 +30,17 @@ func (r *reservationRepositoryImpl) GetByUserID(userID uint) ([]models.Reservati
 	err := r.db.Where("user_id = ?", userID).
 		Preload("Workspace").
 		Preload("Tariff").
+		Find(&reservations).Error
+	return reservations, err
+}
+
+func (r *reservationRepositoryImpl) GetAll() ([]models.Reservation, error) {
+	var reservations []models.Reservation
+	err := r.db.
+		Preload("User").
+		Preload("Workspace").
+		Preload("Tariff").
+		Order("created_at desc").
 		Find(&reservations).Error
 	return reservations, err
 }

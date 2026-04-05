@@ -25,6 +25,6 @@ func (r *auditRepositoryImpl) Create(log *models.AuditLog) error {
 
 func (r *auditRepositoryImpl) GetAll() ([]models.AuditLog, error) {
 	var logs []models.AuditLog
-	err := r.db.Order("created_at desc").Find(&logs).Error
+	err := r.db.Preload("User").Order("created_at desc").Find(&logs).Error
 	return logs, err
 }

@@ -21,7 +21,7 @@ import (
 )
 
 func main() {
-
+	logger.Init()
 	err := godotenv.Load(".env")
 	if err != nil {
 		log.Printf("Warning: .env file not found, using system environment variables")
@@ -72,7 +72,7 @@ func main() {
 	// Services
 	locationService := service.NewLocationService(locationRepo)
 	workspaceService := service.NewWorkspaceService(workspaceRepo)
-	userService := service.NewUserService(userRepo)
+	userService := service.NewUserService(userRepo, auditRepo)
 	reservationService := service.NewReservationService(reservationRepo, auditRepo)
 	tariffService := service.NewTariffService(tariffRepo)
 	categoryService := service.NewCategoryService(categoryRepo)
