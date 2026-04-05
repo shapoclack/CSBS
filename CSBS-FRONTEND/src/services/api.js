@@ -1,11 +1,12 @@
 const API_URL = 'http://localhost:8080/api';
 
 export const authService = {
-    async register(name, email, phone, password) {
+    async register(name, email, phone, password, role = 'client') {
         const res = await fetch(`${API_URL}/users/register`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ name, email, phone, password })
+            credentials: 'include',
+            body: JSON.stringify({ name, email, phone, password, role })
         });
         if (!res.ok) {
             const errorText = await res.text();
@@ -18,6 +19,7 @@ export const authService = {
         const res = await fetch(`${API_URL}/users/login`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
+            credentials: 'include',
             body: JSON.stringify({ email, password })
         });
         if (!res.ok) {

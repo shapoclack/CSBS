@@ -53,6 +53,8 @@ export default function Profile() {
                 }
             } catch (err) {
                 console.error("Failed to fetch profile", err);
+                localStorage.removeItem('user');
+                setUser(null);
             } finally {
                 setLoading(false);
             }
@@ -68,8 +70,9 @@ export default function Profile() {
         return <Navigate to="/" />;
     }
 
-    // Default to client if no role
-    const profileUser = user || { name: 'Гость', email: 'guest@example.com', phone: '', role: 'client' };
+    // Default to client if no role or invalid object in state
+    const defaultUser = { name: 'Гость', email: 'guest@example.com', phone: '', role: 'client' };
+    const profileUser = (user && user.name) ? user : defaultUser;
     const role = profileUser.role || 'client';
 
     const renderClientPanel = () => (

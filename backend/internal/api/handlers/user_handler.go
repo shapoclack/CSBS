@@ -53,6 +53,7 @@ type registerRequest struct {
 	Email    string `json:"email"`
 	Phone    string `json:"phone"`
 	Password string `json:"password"`
+	Role     string `json:"role"`
 }
 
 func (h *UserHandler) register(w http.ResponseWriter, r *http.Request) {
@@ -64,7 +65,7 @@ func (h *UserHandler) register(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	user, err := h.service.Register(req.Name, req.Email, req.Phone, req.Password)
+	user, err := h.service.Register(req.Name, req.Email, req.Phone, req.Password, req.Role)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return

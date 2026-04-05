@@ -125,7 +125,7 @@ export default function AuthModal({ isOpen, onClose, initialMode = 'login' }) {
             console.log(`Submitting ${mode} form...`, formData);
             try {
                 if (mode === 'register') {
-                    await authService.register(formData.name, formData.email, formData.phone, formData.password);
+                    await authService.register(formData.name, formData.email, formData.phone, formData.password, formData.role);
                     // Automatically log in after registration, or just prompt to log in.
                     // For now, let's login automatically.
                     await authService.login(formData.email, formData.password);
@@ -133,11 +133,13 @@ export default function AuthModal({ isOpen, onClose, initialMode = 'login' }) {
                     await authService.login(formData.email, formData.password);
                 }
 
+                // Save user auth state first so getMe() knows we are authenticated
+                localStorage.setItem('isAuthenticated', 'true');
+
                 // Fetch current user details
                 const user = await authService.getMe();
 
                 // Save user info
-                localStorage.setItem('isAuthenticated', 'true');
                 localStorage.setItem('user', JSON.stringify(user));
 
                 window.dispatchEvent(new Event('authChange'));

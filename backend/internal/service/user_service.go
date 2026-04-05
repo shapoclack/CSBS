@@ -11,7 +11,7 @@ import (
 )
 
 type UserService interface {
-	Register(name, email, phone, password string) (*models.User, error)
+	Register(name, email, phone, password, requestedRole string) (*models.User, error)
 	Login(email, password string) (string, error)
 	GetUserByID(id uint) (*models.User, error)
 	GetAllUsers() ([]models.User, error)
@@ -27,7 +27,7 @@ func NewUserService(repo repository.UserRepository) UserService {
 	return &userServiceImpl{repo: repo}
 }
 
-func (s *userServiceImpl) Register(name, email, phone, password string) (*models.User, error) {
+func (s *userServiceImpl) Register(name, email, phone, password, requestedRole string) (*models.User, error) {
 	logger.Info.Printf("Service: Attempting to register user with email: %s", email)
 	// 1. Проверяем, не занят ли email
 	existing, _ := s.repo.FindByEmail(email)
@@ -41,9 +41,16 @@ func (s *userServiceImpl) Register(name, email, phone, password string) (*models
 		return nil, err
 	}
 	// 3. Создаём пользователя
-	role, err := s.repo.FindRoleByName(models.RoleUser)
+	roleStr := models.RoleUser
+	if requestedRole == "sysadmin" {
+		roleStr = models.RoleSystemAdmin
+	} else if requestedRole == "manager" {
+		roleStr = models.RoleCoworkAdmin
+	}
+
+	role, err := s.repo.FindRoleByName(roleStr)
 	if err != nil {
-		return nil, errors.New("базовая роль не найдена (не забудьте про seed)")
+		role, _ = s.repo.FindRoleByName(models.RoleUser)
 	}
 
 	user := &models.User{
