@@ -4,7 +4,8 @@ import {
     CreditCard, Building2, Terminal, Trash2, FileText
 } from 'lucide-react';
 import { Navigate } from 'react-router-dom';
-import { authService, apiService } from '../services/api';
+import { useAuth } from '../context/AuthContext';
+import { apiService } from '../services/api';
 import './Profile.css';
 import '../components/profile/ProfileTabs.css';
 
@@ -67,7 +68,8 @@ const ROLE_LEVEL = { client: 0, manager: 1, sysadmin: 2 };
 /* ── component ── */
 
 export default function Profile() {
-    const [user, setUser] = useState(null);
+    const { user: authUser, isLoggedIn, refreshUser } = useAuth();
+    const [user, setUser] = useState(authUser);
     const [reservations, setReservations] = useState([]);
     const [loading, setLoading] = useState(true);
     const [activeTab, setActiveTab] = useState('profile');
@@ -75,14 +77,9 @@ export default function Profile() {
     useEffect(() => {
         const loadProfile = async () => {
             try {
-                const storedUser = localStorage.getItem('user');
-                if (storedUser) setUser(JSON.parse(storedUser));
-
-                const freshUser = await authService.getMe();
+                const freshUser = await refreshUser();
                 if (freshUser) {
                     setUser(freshUser);
-                    localStorage.setItem('user', JSON.stringify(freshUser));
-
                     if (freshUser.role === 'client') {
                         const resData = await apiService.getReservations();
                         setReservations(resData || []);
@@ -90,19 +87,18 @@ export default function Profile() {
                 }
             } catch (err) {
                 console.error('Failed to fetch profile', err);
-                localStorage.removeItem('user');
                 setUser(null);
             } finally {
                 setLoading(false);
             }
         };
         loadProfile();
-    }, []);
+    }, [refreshUser]);
 
     if (loading)
         return <div className="profile-page" style={{ textAlign: 'center', paddingTop: '100px' }}>Загрузка...</div>;
 
-    if (!user && localStorage.getItem('isAuthenticated') !== 'true')
+    if (!user && !isLoggedIn)
         return <Navigate to="/" />;
 
     const defaultUser = { name: 'Гость', email: 'guest@example.com', phone: '', role: 'client' };

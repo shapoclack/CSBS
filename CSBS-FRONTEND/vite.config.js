@@ -6,6 +6,17 @@ export default defineConfig({
   plugins: [react()],
   server: {
     port: 3000,
-    strictPort: true, // Fail if port 3000 is already in use, instead of automatically trying the next one
+    strictPort: true,
+  },
+  build: {
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          'vendor-react': ['react', 'react-dom', 'react-router-dom'],
+          'vendor-ogl': ['ogl'],
+          'vendor-icons': ['lucide-react'],
+        },
+      },
+    },
   },
 })

@@ -3,26 +3,19 @@ import BookingForm from '../components/booking/BookingForm';
 import BookingMap from '../components/booking/BookingMap';
 import AuthModal from '../components/AuthModal';
 import { Lock } from 'lucide-react';
+import { useAuth } from '../context/AuthContext';
 import { apiService } from '../services/api';
 import './Booking.css';
 
 export default function Booking() {
+    const { isLoggedIn } = useAuth();
     const [selectedType, setSelectedType] = useState('desk');
     const [selectedDesk, setSelectedDesk] = useState(null);
     const [tariffs, setTariffs] = useState([]);
-
     const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
-    const [isLoggedIn, setIsLoggedIn] = useState(false);
 
     useEffect(() => {
-        const checkAuth = () => setIsLoggedIn(localStorage.getItem('isAuthenticated') === 'true');
-        checkAuth();
-        window.addEventListener('authChange', checkAuth);
-
-        // Fetch tariffs
         apiService.getTariffs().then(data => setTariffs(data)).catch(console.error);
-
-        return () => window.removeEventListener('authChange', checkAuth);
     }, []);
 
     const handleTypeSelect = (type) => {

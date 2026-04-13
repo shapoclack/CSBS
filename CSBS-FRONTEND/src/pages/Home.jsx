@@ -1,53 +1,17 @@
-import { useRef, useState } from 'react';
-import { Search, MapPin, Wifi, Coffee, Users, Printer, Clock, Star, ChevronDown, Check } from 'lucide-react';
+import { useRef, useState, lazy, Suspense } from 'react';
+import { MapPin, Wifi, Coffee, Users, Printer, Clock, Star, ChevronDown, Check } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import Squares from './Squares';
 import ElectricBorder from '../components/ElectricBorder';
-import CircularGallery from '../components/CircularGallery/CircularGallery';
 import './Home.css';
 
-// Import local assets
+const CircularGallery = lazy(() => import('../components/CircularGallery/CircularGallery'));
+
 import cowImg from '../assets/cow.png';
-import space1 from '../assets/space 1.jpg';
-import space2 from '../assets/space 2.jpg';
-import space3 from '../assets/space 3.jpeg';
-import space4 from '../assets/space 4.jpeg';
+import { workspaces, reviews, tariffs, faqs, galleryItems } from '../constants/homeData';
 
 export default function Home() {
-    const workspaces = [
-        { id: 1, name: "Открытое пространство", location: "Центр", price: "1400 ₽/день", img: space1, rating: 4.9 },
-        { id: 2, name: "Переговорная", location: "Технопарк", price: "1700 ₽/день", img: space2, rating: 4.8 },
-        { id: 3, name: "Аренда небольших офисов", location: "Набережная", price: "2200 ₽/день", img: space3, rating: 5.0 },
-    ];
-
-    // НОВЫЕ ДАННЫЕ ДЛЯ БЛОКОВ
     const [activeFaq, setActiveFaq] = useState(null);
-
-    const reviews = [
-        { id: 1, name: "Алексей Смирнов", role: "Frontend Разработчик", text: "Лучший коворкинг в городе! Отличный интернет, удобные кресла и всегда можно найти тихое место для созвона. Неоновый дизайн просто пушка.", rating: 5, avatar: "https://i.pravatar.cc/150?img=11" },
-        { id: 2, name: "Елена Ковалева", role: "Основатель стартапа", text: "Арендуем здесь смарт-офис для команды из 4 человек. Очень нравится комьюнити, уже нашли здесь двух партнеров для проекта.", rating: 5, avatar: "https://i.pravatar.cc/150?img=5" },
-        { id: 3, name: "Михаил Добров", role: "UX/UI Дизайнер", text: "Атмосфера располагает к творчеству. Отдельное спасибо за безлимитный спешелти кофе и зону отдыха с приставкой.", rating: 4, avatar: "https://i.pravatar.cc/150?img=8" },
-    ];
-
-    const tariffs = [
-        { id: 1, name: "Гибкое место", price: "1400 ₽", period: "/день", desc: "Идеально для тех, кому нужно поработать пару дней в неделю.", features: ["Любое свободное место в open-space", "Высокоскоростной Wi-Fi", "Чай, кофе и снеки", "Доступ с 9:00 до 22:00"], popular: false },
-        { id: 2, name: "Фиксированное место", price: "14000 ₽", period: "/месяц", desc: "Закрепленный за вами стол со шкафчиком.", features: ["Личный просторный стол", "Доступ 24/7", "20 часов в переговорной", "Безлимитная печать", "Локер для вещей"], popular: true },
-        { id: 3, name: "Смарт-офис", price: "45000 ₽", period: "/месяц", desc: "Приватный офис для команды до 4-х человек.", features: ["Изолированное помещение", "Доступ 24/7", "Юридический адрес", "Уборка включена", "Доступ ко всем зонам"], popular: false },
-    ];
-
-    const faqs = [
-        { id: 1, q: "Можно ли приходить с гостями?", a: "Да, вы можете бесплатно приглашать до 2-х гостей на срок до 2 часов. Для более длительных встреч потребуется забронировать переговорную комнату." },
-        { id: 2, q: "У вас Pet-friendly коворкинг?", a: "Абсолютно! Мы любим воспитанных питомцев. Главное, чтобы ваш пушистый друг не мешал другим резидентам." },
-        { id: 3, q: "Как работает доступ 24/7?", a: "Резиденты с месячными тарифами получают электронный ключ в мобильном приложении, который открывает двери в любое время дня и ночи." },
-        { id: 4, q: "Есть ли парковка?", a: "Да, для резидентов доступна охраняемая наземная парковка. Для тарифа «Смарт-офис» предоставляется 1 бесплатное парковочное место." },
-    ];
-
-    const gallery = [
-        space1,
-        space2,
-        space3,
-        space4
-    ];
 
     const toggleFaq = (id) => {
         setActiveFaq(activeFaq === id ? null : id);
@@ -163,6 +127,7 @@ export default function Home() {
                                 src={cowImg}
                                 alt="Coworking Space"
                                 className="about-image neon-image-border"
+                                loading="lazy"
                             />
                         </div>
                     </div>
@@ -180,7 +145,7 @@ export default function Home() {
                         <ElectricBorder key={space.id}>
                             <div className="workspace-card glass-panel" style={{ border: 'none' }}>
                                 <div className="workspace-img-container">
-                                    <img src={space.img} alt={space.name} className="workspace-img" />
+                                    <img src={space.img} alt={space.name} className="workspace-img" loading="lazy" />
                                     <div className="workspace-price">{space.price}</div>
                                 </div>
                                 <div className="workspace-info">
@@ -245,17 +210,14 @@ export default function Home() {
                     </div>
                 </div>
                 <div style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%' }}>
-                    <CircularGallery
-                        bend={3}
-                        textColor="#ffffff"
-                        borderRadius={0.05}
-                        items={[
-                            { image: space1, text: 'Открытое пространство' },
-                            { image: space2, text: 'Переговорная' },
-                            { image: space3, text: 'Небольшой офис' },
-                            { image: space4, text: 'Лаунж-зона' }
-                        ]}
-                    />
+                    <Suspense fallback={<div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%', color: 'var(--color-text-muted)' }}>Загрузка галереи...</div>}>
+                        <CircularGallery
+                            bend={3}
+                            textColor="#ffffff"
+                            borderRadius={0.05}
+                            items={galleryItems}
+                        />
+                    </Suspense>
                 </div>
             </section>
 
@@ -269,7 +231,7 @@ export default function Home() {
                         {reviews.map(review => (
                             <div key={review.id} className="review-card glass-panel">
                                 <div className="review-header">
-                                    <img src={review.avatar} alt={review.name} className="review-avatar" />
+                                    <img src={review.avatar} alt={review.name} className="review-avatar" loading="lazy" />
                                     <div className="review-author">
                                         <h4>{review.name}</h4>
                                         <span className="review-role">{review.role}</span>

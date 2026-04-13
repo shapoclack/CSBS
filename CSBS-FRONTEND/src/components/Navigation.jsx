@@ -1,26 +1,19 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { Bot, MapPin, User } from 'lucide-react';
+import { useAuth } from '../context/AuthContext';
 import cowLogo from '../assets/cow.png';
 import AuthModal from './AuthModal';
 import './Navigation.css';
 
 export default function Navigation() {
     const location = useLocation();
+    const { isLoggedIn, logout } = useAuth();
     const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
     const [authMode, setAuthMode] = useState('login');
-    const [isLoggedIn, setIsLoggedIn] = useState(false);
-
-    useEffect(() => {
-        const checkAuth = () => setIsLoggedIn(localStorage.getItem('isAuthenticated') === 'true');
-        checkAuth();
-        window.addEventListener('authChange', checkAuth);
-        return () => window.removeEventListener('authChange', checkAuth);
-    }, []);
 
     const handleLogout = () => {
-        localStorage.removeItem('isAuthenticated');
-        window.dispatchEvent(new Event('authChange'));
+        logout();
     };
 
     const openAuthModal = (mode) => {

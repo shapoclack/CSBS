@@ -1,9 +1,10 @@
 import { useState, useEffect } from 'react';
 import { X, Mail, Lock, User, Eye, EyeOff, Phone, Shield } from 'lucide-react';
-import { authService } from '../services/api';
+import { useAuth } from '../context/AuthContext';
 import './AuthModal.css';
 
 export default function AuthModal({ isOpen, onClose, initialMode = 'login' }) {
+    const { login, register } = useAuth();
     const [mode, setMode] = useState(initialMode); // 'login' or 'register'
     const [showPassword, setShowPassword] = useState(false);
     const [showConfirmPassword, setShowConfirmPassword] = useState(false);
@@ -122,34 +123,17 @@ export default function AuthModal({ isOpen, onClose, initialMode = 'login' }) {
         setErrors(prev => ({ ...prev, submit: '' }));
 
         if (validateForm()) {
-            console.log(`Submitting ${mode} form...`, formData);
             try {
                 if (mode === 'register') {
-                    await authService.register(formData.name, formData.email, formData.phone, formData.password, formData.role);
-                    // Automatically log in after registration, or just prompt to log in.
-                    // For now, let's login automatically.
-                    await authService.login(formData.email, formData.password);
+                    await register(formData.name, formData.email, formData.phone, formData.password, formData.role);
                 } else {
-                    await authService.login(formData.email, formData.password);
+                    await login(formData.email, formData.password);
                 }
-
-                // Save user auth state first so getMe() knows we are authenticated
-                localStorage.setItem('isAuthenticated', 'true');
-
-                // Fetch current user details
-                const user = await authService.getMe();
-
-                // Save user info
-                localStorage.setItem('user', JSON.stringify(user));
-
-                window.dispatchEvent(new Event('authChange'));
                 onClose();
             } catch (err) {
                 console.error("Auth error:", err);
                 setErrors(prev => ({ ...prev, submit: err.message || 'Ошибка сервера. Попробуйте снова.' }));
             }
-        } else {
-            console.log('Validation failed');
         }
     };
 
