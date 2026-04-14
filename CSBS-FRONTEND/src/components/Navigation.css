@@ -99,3 +99,46 @@
     color: var(--color-accent-hover);
     filter: drop-shadow(0 0 10px rgba(0, 166, 192, 0.4));
 }
+
+/* Mobile burger wrapper — hidden on desktop */
+.nav-links-mobile {
+    display: none;
+}
+
+/* Responsive */
+@media (max-width: 992px) {
+    .nav-container {
+        height: 72px;
+    }
+
+    .logo-icon {
+        width: 64px;
+        height: 64px;
+    }
+
+    .brand-name {
+        font-size: 1.6rem;
+        letter-spacing: 3px;
+    }
+
+    .nav-links-desktop {
+        display: none;
+    }
+
+    .nav-links-mobile {
+        display: flex;
+        align-items: center;
+    }
+}
+
+@media (max-width: 480px) {
+    .logo-icon {
+        width: 52px;
+        height: 52px;
+    }
+
+    .brand-name {
+        font-size: 1.35rem;
+        letter-spacing: 2px;
+    }
+}

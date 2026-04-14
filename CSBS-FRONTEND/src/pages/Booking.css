@@ -277,8 +277,8 @@
 }
 
 .legend-dot.busy {
-    background-color: rgba(255, 60, 60, 0.2);
-    border: 2px solid rgba(255, 60, 60, 0.5);
+    background-color: rgba(255, 59, 48, 0.35);
+    border: 2px solid rgba(255, 59, 48, 0.9);
 }
 
 .legend-dot.selected {
@@ -367,10 +367,17 @@
 }
 
 .desk.busy {
-    background-color: rgba(255, 60, 60, 0.1);
-    border: 2px solid rgba(255, 60, 60, 0.3);
-    color: rgba(255, 60, 60, 0.8);
+    background-color: rgba(255, 59, 48, 0.35) !important;
+    border: 2px solid rgba(255, 59, 48, 0.9) !important;
+    color: #ffffff !important;
+    box-shadow: 0 0 10px rgba(255, 59, 48, 0.4) !important;
     cursor: not-allowed;
+    pointer-events: none;
+}
+
+.desk.busy span {
+    color: #ffffff !important;
+    font-weight: 700;
 }
 
 .desk.selected-state {
@@ -434,15 +441,18 @@
 }
 
 .meeting-room.busy {
-    background-color: rgba(255, 60, 60, 0.1);
-    border-color: rgba(255, 60, 60, 0.3);
-    color: rgba(255, 60, 60, 0.8);
+    background-color: rgba(255, 59, 48, 0.35) !important;
+    border: 2px solid rgba(255, 59, 48, 0.9) !important;
+    color: #ffffff !important;
+    box-shadow: 0 0 10px rgba(255, 59, 48, 0.4) !important;
     cursor: not-allowed;
+    pointer-events: none;
 }
 
 .meeting-room.busy svg,
-.meeting-room.busy small {
-    color: rgba(255, 60, 60, 0.8);
+.meeting-room.busy small,
+.meeting-room.busy span {
+    color: #ffffff !important;
 }
 
 .meeting-room.selected-state {
@@ -591,9 +601,29 @@
     background-color: var(--color-accent);
 }
 
-.status-badge.busy {
-    color: rgba(255, 60, 60, 0.8);
-    background-color: rgba(255, 60, 60, 0.1);
+.private-office-card.busy {
+    background-color: rgba(255, 59, 48, 0.25) !important;
+    border: 2px solid rgba(255, 59, 48, 0.9) !important;
+    box-shadow: 0 0 10px rgba(255, 59, 48, 0.4) !important;
+    cursor: not-allowed;
+    pointer-events: none;
+}
+
+.private-office-card.busy .office-icon-wrapper,
+.private-office-card.busy .office-header h3,
+.private-office-card.busy .office-desc,
+.private-office-card.busy .badge,
+.private-office-card.busy .amenity-dot {
+    color: #ffffff !important;
+}
+
+.private-office-card.busy .office-icon-wrapper {
+    background-color: rgba(255, 59, 48, 0.4) !important;
+}
+
+.status-badge.blocked {
+    color: #ff3b30 !important;
+    background-color: rgba(255, 59, 48, 0.2) !important;
 }
 
 /* Coming soon notice */

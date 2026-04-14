@@ -150,6 +150,44 @@ a:hover {
   padding: 0 1.5rem;
 }
 
+.app-main {
+  padding-top: 80px;
+  flex: 1;
+}
+
+@media (max-width: 992px) {
+  .app-main {
+    padding-top: 72px;
+  }
+
+  .container {
+    padding: 0 1rem;
+  }
+
+  h1 {
+    font-size: 2.5rem;
+  }
+
+  h2 {
+    font-size: 1.75rem;
+  }
+}
+
+@media (max-width: 480px) {
+  h1 {
+    font-size: 2rem;
+  }
+
+  h2 {
+    font-size: 1.5rem;
+  }
+
+  .btn {
+    padding: 0.65rem 1.2rem;
+    font-size: 0.95rem;
+  }
+}
+
 /* Micro-animations */
 @keyframes fadeIn {
   from {

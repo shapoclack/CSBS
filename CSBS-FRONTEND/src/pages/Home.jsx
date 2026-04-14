@@ -1,23 +1,21 @@
-import { useRef, useState, lazy, Suspense } from 'react';
+import { useRef, useState, useCallback, lazy, Suspense } from 'react';
 import { MapPin, Wifi, Coffee, Users, Printer, Clock, Star, ChevronDown, Check } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import Squares from './Squares';
 import ElectricBorder from '../components/ElectricBorder';
+import cowImg from '../assets/cow.png';
+import { workspaces, reviews, tariffs, faqs, galleryItems } from '../constants/homeData';
 import './Home.css';
 
 const CircularGallery = lazy(() => import('../components/CircularGallery/CircularGallery'));
 
-import cowImg from '../assets/cow.png';
-import { workspaces, reviews, tariffs, faqs, galleryItems } from '../constants/homeData';
-
 export default function Home() {
     const [activeFaq, setActiveFaq] = useState(null);
-
-    const toggleFaq = (id) => {
-        setActiveFaq(activeFaq === id ? null : id);
-    };
-
     const heroRef = useRef(null);
+
+    const toggleFaq = useCallback((id) => {
+        setActiveFaq(prev => (prev === id ? null : id));
+    }, []);
 
     return (
         <div className="home-page">
@@ -203,14 +201,14 @@ export default function Home() {
             </section>
 
             {/* GALLERY SECTION */}
-            <section className="gallery-section" style={{ height: '600px', position: 'relative' }}>
-                <div className="container" style={{ position: 'relative', zIndex: 1, pointerEvents: 'none' }}>
+            <section className="gallery-section">
+                <div className="container gallery-heading">
                     <div className="section-header">
                         <h2>Пространство</h2>
                     </div>
                 </div>
-                <div style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%' }}>
-                    <Suspense fallback={<div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%', color: 'var(--color-text-muted)' }}>Загрузка галереи...</div>}>
+                <div className="gallery-canvas">
+                    <Suspense fallback={<div className="gallery-fallback">Загрузка галереи...</div>}>
                         <CircularGallery
                             bend={3}
                             textColor="#ffffff"

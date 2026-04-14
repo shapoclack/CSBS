@@ -479,7 +479,31 @@
 
 /* GALLERY */
 .gallery-section {
-    padding: 5rem 0;
+    padding: 5rem 0 0;
+    height: 720px;
+    position: relative;
+}
+
+.gallery-heading {
+    position: relative;
+    z-index: 1;
+    pointer-events: none;
+}
+
+.gallery-canvas {
+    position: absolute;
+    top: 140px;
+    left: 0;
+    width: 100%;
+    height: calc(100% - 140px);
+}
+
+.gallery-fallback {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100%;
+    color: var(--color-text-muted);
 }
 
 .gallery-grid {
@@ -735,5 +759,118 @@
     }
     .cta-content {
         padding: 2rem;
+    }
+}
+
+/* MOBILE-SPECIFIC FIXES */
+@media (max-width: 768px) {
+    .hero {
+        padding: 4rem 0 3rem;
+    }
+
+    .main-title .coworking-text {
+        font-size: 3rem;
+    }
+
+    .main-title .future-text {
+        font-size: 1.5rem;
+        letter-spacing: 1px;
+    }
+
+    .hero-subtitle {
+        font-size: 1rem;
+        margin: 1rem auto 2rem;
+    }
+
+    .hero-actions {
+        gap: 1rem;
+    }
+
+    .btn-lg {
+        padding: 0.85rem 1.8rem;
+        font-size: 1rem;
+    }
+
+    .stat-number {
+        font-size: 2.5rem;
+    }
+
+    .amenities-section,
+    .tariffs-section,
+    .reviews-section,
+    .faq-section {
+        padding: 3rem 0;
+    }
+
+    .about-section {
+        padding: 3rem 0;
+    }
+
+    .about-content-wrapper {
+        flex-direction: column;
+        gap: 2rem;
+    }
+
+    .about-image {
+        max-width: 100%;
+        height: auto;
+    }
+
+    .amenities-header {
+        margin-bottom: 2.5rem;
+    }
+
+    .amenities-header h2 {
+        font-size: 1.75rem;
+    }
+
+    .section-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.5rem;
+    }
+
+    .workspaces-section {
+        padding: 1rem 1rem 3rem;
+    }
+
+    .gallery-section {
+        height: 560px;
+    }
+
+    .gallery-canvas {
+        top: 110px;
+        height: calc(100% - 110px);
+    }
+
+    .map-cta-container {
+        padding: 0;
+    }
+
+    .cta-content {
+        padding: 2rem 1.5rem;
+    }
+
+    .map-wrapper {
+        min-height: 280px;
+    }
+}
+
+@media (max-width: 480px) {
+    .main-title .coworking-text {
+        font-size: 2.25rem;
+    }
+
+    .main-title .future-text {
+        font-size: 1.15rem;
+    }
+
+    .gallery-section {
+        height: 480px;
+    }
+
+    .gallery-canvas {
+        top: 90px;
+        height: calc(100% - 90px);
     }
 }

@@ -1,10 +1,10 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { CalendarCheck, MapPin, Building2, Presentation, Armchair } from 'lucide-react';
 import DatePicker from './DatePicker';
 import Dropdown from './Dropdown';
 import './DatePicker.css';
 
-export default function BookingForm({ selectedType, handleTypeSelect, selectedDesk, getPrice, onSubmit }) {
+export default function BookingForm({ selectedType, handleTypeSelect, selectedDesk, getPrice, onSubmit, onFormChange }) {
     const isOffice = selectedType === 'office';
     const today = new Date().toISOString().split('T')[0];
 
@@ -60,6 +60,19 @@ export default function BookingForm({ selectedType, handleTypeSelect, selectedDe
             tariff
         });
     };
+
+    useEffect(() => {
+        if (typeof onFormChange === 'function') {
+            onFormChange({
+                dateFrom,
+                dateTo: isOffice ? dateTo : dateFrom,
+                timeFrom,
+                timeTo,
+                location,
+                tariff
+            });
+        }
+    }, [dateFrom, dateTo, timeFrom, timeTo, location, tariff, isOffice, onFormChange]);
 
     return (
         <aside className="booking-form-col">

@@ -12,6 +12,7 @@ type ReservationService interface {
 	CreateReservation(userID, workspaceID, tariffID uint, startTime, endTime time.Time) (*models.Reservation, error)
 	GetUserReservations(userID uint) ([]models.Reservation, error)
 	GetAllReservations() ([]models.Reservation, error)
+	GetUnavailableWorkspaceIDs(startTime, endTime time.Time) ([]uint, error)
 }
 type reservationServiceImpl struct {
 	repo      repository.ReservationRepository
@@ -61,6 +62,10 @@ func (s *reservationServiceImpl) GetUserReservations(userID uint) ([]models.Rese
 }
 
 func (s *reservationServiceImpl) GetAllReservations() ([]models.Reservation, error) {
-	logger.Info.Println("Service: Requesting all reservations (admin)")
+	logger.Info.Println("Service: Requesting all reservations (Admin)")
 	return s.repo.GetAll()
+}
+
+func (s *reservationServiceImpl) GetUnavailableWorkspaceIDs(startTime, endTime time.Time) ([]uint, error) {
+	return s.repo.GetUnavailableWorkspaceIDs(startTime, endTime)
 }

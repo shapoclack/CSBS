@@ -150,3 +150,48 @@
     color: var(--color-text-muted);
     font-size: 0.9rem;
 }
+
+@media (max-width: 768px) {
+    .profile-header {
+        padding: 2rem 0;
+        margin-bottom: 1.5rem;
+    }
+
+    .profile-header h1 {
+        font-size: 1.75rem;
+    }
+
+    .profile-header p {
+        font-size: 1rem;
+    }
+
+    .profile-card {
+        padding: 1.25rem;
+    }
+
+    .profile-card h2 {
+        font-size: 1.2rem;
+    }
+
+    .user-info-grid {
+        grid-template-columns: 1fr;
+        gap: 1rem;
+    }
+
+    .mock-table {
+        display: block;
+        overflow-x: auto;
+        white-space: nowrap;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    .mock-table th,
+    .mock-table td {
+        padding: 0.75rem;
+        font-size: 0.85rem;
+    }
+
+    .admin-grid {
+        grid-template-columns: 1fr;
+    }
+}

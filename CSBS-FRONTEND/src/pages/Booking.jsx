@@ -1,10 +1,11 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import BookingForm from '../components/booking/BookingForm';
 import BookingMap from '../components/booking/BookingMap';
 import AuthModal from '../components/AuthModal';
 import { Lock } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { apiService } from '../services/api';
+import { toast } from '../utils/toast';
 import './Booking.css';
 
 export default function Booking() {
@@ -13,9 +14,44 @@ export default function Booking() {
     const [selectedDesk, setSelectedDesk] = useState(null);
     const [tariffs, setTariffs] = useState([]);
     const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
+    const [unavailableDesks, setUnavailableDesks] = useState([]);
+    const [currentFormData, setCurrentFormData] = useState(null);
+    // Ref для хранения актуальных данных формы без лишних ре-рендеров
+    const formDataRef = useRef(null);
 
     useEffect(() => {
         apiService.getTariffs().then(data => setTariffs(data)).catch(console.error);
+    }, []);
+
+    const fetchAvailability = useCallback(async (data) => {
+        if (!data) return;
+        const startD = data.dateFrom || new Date().toISOString().split('T')[0];
+        const endD = data.dateTo || startD;
+        if (!data.timeFrom || !data.timeTo) return;
+        const startTime = `${startD}T${data.timeFrom}:00Z`;
+        const endTime = `${endD}T${data.timeTo}:00Z`;
+        try {
+            const ids = await apiService.getUnavailableWorkspaces(startTime, endTime);
+            setUnavailableDesks(ids || []);
+        } catch (err) {
+            console.error('Ошибка проверки доступности:', err.message);
+        }
+    }, []);
+
+    // Effect to fetch availability dynamically when form dates/times change
+    useEffect(() => {
+        if (!currentFormData) return;
+
+        const timer = setTimeout(() => {
+            fetchAvailability(currentFormData);
+        }, 500); // 500ms debounce
+
+        return () => clearTimeout(timer);
+    }, [currentFormData, fetchAvailability]);
+
+    const handleFormChange = useCallback((data) => {
+        formDataRef.current = data;
+        setCurrentFormData(data);
     }, []);
 
     const handleTypeSelect = (type) => {
@@ -45,7 +81,7 @@ export default function Booking() {
             // Mocking IDs based on selection string, e.g. "A1" -> 1
             const workspaceIdMatch = selectedDesk.match(/\d+/);
             const wId = workspaceIdMatch ? parseInt(workspaceIdMatch[0], 10) : 1;
-            
+
             const durationMap = { '1h': 60, '4h': 240, '8h': 480 };
             const mins = durationMap[formData.tariff || '1h'];
             // Find tariff ID. If location not passed in formData, fallback to 1
@@ -67,11 +103,15 @@ export default function Booking() {
                 start_time: startTime,
                 end_time: endTime
             });
-            
-            alert('Бронирование успешно создано! Вы можете посмотреть его в Личном кабинете.');
+
+            // Сбрасываем выбранное место и обновляем список занятых мест
+            setSelectedDesk(null);
+            await fetchAvailability(formDataRef.current || formData);
+
+            toast.success('Бронирование успешно создано! Вы можете посмотреть его в Личном кабинете.');
         } catch(err) {
             console.error(err);
-            alert('Ошибка при создании бронирования: ' + err.message);
+            toast.error('Ошибка при создании бронирования: ' + err.message);
         }
     };
 
@@ -123,12 +163,14 @@ export default function Booking() {
                         selectedDesk={selectedDesk} 
                         getPrice={getPrice} 
                         onSubmit={handleReservationSubmit}
+                        onFormChange={handleFormChange}
                     />
                     
                     <BookingMap 
                         selectedType={selectedType}
                         selectedDesk={selectedDesk}
                         handleDeskSelect={handleDeskSelect}
+                        unavailableDesks={unavailableDesks}
                     />
                 </div>
             </div>

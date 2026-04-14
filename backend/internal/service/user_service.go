@@ -145,8 +145,10 @@ func (s *userServiceImpl) UpdateUserRole(id uint, roleName string) error {
 	if err != nil {
 		return errors.New("такой роли не существует")
 	}
-	user.RoleID = &newRole.ID
-	err = s.repo.Update(user)
+
+	logger.Info.Printf("Service: Updating role for user %d from role_id=%v to role_id=%d (%s)", id, user.RoleID, newRole.ID, roleName)
+
+	err = s.repo.UpdateColumn(id, "role_id", newRole.ID)
 	if err == nil {
 		s.auditRepo.Create(&models.AuditLog{
 			Action:     "Update Role",

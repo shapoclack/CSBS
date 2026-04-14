@@ -1,7 +1,8 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { createPortal } from 'react-dom';
 import { Users, Search, X, Ban, Eye } from 'lucide-react';
 import { apiService } from '../../services/api';
+import { toast } from '../../utils/toast';
 
 const ROLE_LABELS = {
     'user':         'Клиент',
@@ -16,9 +17,19 @@ export default function ClientsList() {
     const [search, setSearch] = useState('');
     const [viewUser, setViewUser] = useState(null);
 
+    // Determine if current user is a sysadmin (only sysadmins can ban)
+    const currentUser = useMemo(() => {
+        try { return JSON.parse(localStorage.getItem('user')); } catch { return null; }
+    }, []);
+    const isSysAdmin = currentUser?.role === 'sysadmin';
+
     useEffect(() => {
         apiService.getAllUsers()
-            .then(data => setClients(data || []))
+            .then(data => {
+                // Filter to show only plain users
+                const regularUsers = (data || []).filter(u => u.Role?.Name === 'user');
+                setClients(regularUsers);
+            })
             .catch(err => setError(err.message))
             .finally(() => setLoading(false));
     }, []);
@@ -29,15 +40,16 @@ export default function ClientsList() {
                (c.Email    || '').toLowerCase().includes(q);
     });
 
-    const toggleBlock = async (user) => {
-        const newStatus = user.Status === 'активен' ? 'заблокирован' : 'активен';
+    const toggleBlock = async (client) => {
+        const newStatus = client.Status === 'активен' ? 'заблокирован' : 'активен';
         try {
-            await apiService.updateUserStatus(user.ID, newStatus);
-            setClients(prev => prev.map(c =>
-                c.ID === user.ID ? { ...c, Status: newStatus } : c
+            await apiService.updateUserStatus(client.ID, newStatus);
+            setClients(prev => prev.map(c => 
+                c.ID === client.ID ? { ...c, Status: newStatus } : c
             ));
+            toast.success(`Статус изменен на "${newStatus}"`);
         } catch (err) {
-            alert('Ошибка: ' + err.message);
+            toast.error('Ошибка: ' + err.message);
         }
     };
 
@@ -85,13 +97,15 @@ export default function ClientsList() {
                             <td>
                                 <div className="row-actions">
                                     <button className="btn-icon" title="Подробнее" onClick={() => setViewUser(c)}><Eye size={15} /></button>
-                                    <button
-                                        className="btn-icon danger"
-                                        title={c.Status === 'активен' ? 'Заблокировать' : 'Разблокировать'}
-                                        onClick={() => toggleBlock(c)}
-                                    >
-                                        <Ban size={15} />
-                                    </button>
+                                    {isSysAdmin && (
+                                        <button
+                                            className="btn-icon danger"
+                                            title={c.Status === 'активен' ? 'Заблокировать' : 'Разблокировать'}
+                                            onClick={() => toggleBlock(c)}
+                                        >
+                                            <Ban size={15} />
+                                        </button>
+                                    )}
                                 </div>
                             </td>
                         </tr>

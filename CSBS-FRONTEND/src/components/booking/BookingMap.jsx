@@ -3,7 +3,7 @@ import DeskZone from './zones/DeskZone';
 import MeetingRoomZone from './zones/MeetingRoomZone';
 import PrivateOfficeZone from './zones/PrivateOfficeZone';
 
-export default function BookingMap({ selectedType, selectedDesk, handleDeskSelect }) {
+export default function BookingMap({ selectedType, selectedDesk, handleDeskSelect, unavailableDesks = [] }) {
     return (
         <section className="desk-map-col">
             <div className="desk-map-card glass-panel">
@@ -23,13 +23,13 @@ export default function BookingMap({ selectedType, selectedDesk, handleDeskSelec
                     <div className="floor-plan-placeholder">
                         <div className="floor-zones">
                             {selectedType === 'desk' && (
-                                <DeskZone selectedDesk={selectedDesk} handleDeskSelect={handleDeskSelect} />
+                                <DeskZone selectedDesk={selectedDesk} handleDeskSelect={handleDeskSelect} unavailableDesks={unavailableDesks} />
                             )}
                             {selectedType === 'room' && (
-                                <MeetingRoomZone selectedDesk={selectedDesk} handleDeskSelect={handleDeskSelect} />
+                                <MeetingRoomZone selectedDesk={selectedDesk} handleDeskSelect={handleDeskSelect} unavailableDesks={unavailableDesks} />
                             )}
                             {selectedType === 'office' && (
-                                <PrivateOfficeZone selectedDesk={selectedDesk} handleDeskSelect={handleDeskSelect} />
+                                <PrivateOfficeZone selectedDesk={selectedDesk} handleDeskSelect={handleDeskSelect} unavailableDesks={unavailableDesks} />
                             )}
                         </div>
 

@@ -1,6 +1,6 @@
 import { Building2 } from 'lucide-react';
 
-export default function PrivateOfficeZone({ selectedDesk, handleDeskSelect }) {
+export default function PrivateOfficeZone({ selectedDesk, handleDeskSelect, unavailableDesks = [] }) {
     const offices = [
         { 
             id: 'PO1 (8 чел.)', 
@@ -35,41 +35,49 @@ export default function PrivateOfficeZone({ selectedDesk, handleDeskSelect }) {
         <div className="zone-block animate-fade-in">
             <div className="zone-title">Приватные офисы</div>
             <div className="private-offices-list">
-                {offices.map(office => (
-                    <div
-                        key={office.id}
-                        className={`private-office-card ${office.busy ? 'busy' : 'free'} ${selectedDesk === office.id ? 'selected-state' : ''}`}
-                        onClick={() => !office.busy && handleDeskSelect(office.id)}
-                    >
-                        <div className="office-icon-wrapper">
-                            <Building2 size={32} />
-                        </div>
-                        <div className="office-info">
-                            <div className="office-header">
-                                <h3>{office.name}</h3>
+                {offices.map(office => {
+                    const mappedId = parseInt(office.id.replace(/\D/g, ''), 10) || 1;
+                    const isBusy = unavailableDesks.includes(mappedId);
+                    
+                    return (
+                        <div
+                            key={office.id}
+                            className={`private-office-card ${isBusy ? 'busy' : 'free'} ${selectedDesk === office.id ? 'selected-state' : ''}`}
+                            onClick={() => {
+                                if (isBusy) return;
+                                handleDeskSelect(office.id);
+                            }}
+                        >
+                            <div className="office-icon-wrapper">
+                                <Building2 size={32} />
                             </div>
-                            <div className="office-badges">
-                                <span className="badge">{office.capacity}</span>
-                                <span className="badge">{office.area}</span>
+                            <div className="office-info">
+                                <div className="office-header">
+                                    <h3>{office.name}</h3>
+                                </div>
+                                <div className="office-badges">
+                                    <span className="badge">{office.capacity}</span>
+                                    <span className="badge">{office.area}</span>
+                                </div>
+                                <p className="office-desc">{office.description}</p>
+                                <div className="office-amenities">
+                                    {office.amenities.map((item, i) => (
+                                        <span key={i} className="amenity-dot">{item}</span>
+                                    ))}
+                                </div>
                             </div>
-                            <p className="office-desc">{office.description}</p>
-                            <div className="office-amenities">
-                                {office.amenities.map((item, i) => (
-                                    <span key={i} className="amenity-dot">{item}</span>
-                                ))}
+                            <div className="office-status">
+                                {isBusy ? (
+                                    <span className="status-badge blocked">Занято</span>
+                                ) : (
+                                    <span className={`status-badge ${selectedDesk === office.id ? 'active' : 'free'}`}>
+                                        {selectedDesk === office.id ? 'Выбрано' : 'Свободно'}
+                                    </span>
+                                )}
                             </div>
                         </div>
-                        <div className="office-status">
-                            {office.busy ? (
-                                <span className="status-badge busy">Занято</span>
-                            ) : (
-                                <span className={`status-badge ${selectedDesk === office.id ? 'selected' : 'free'}`}>
-                                    {selectedDesk === office.id ? 'Выбрано' : 'Свободно'}
-                                </span>
-                            )}
-                        </div>
-                    </div>
-                ))}
+                    );
+                })}
             </div>
         </div>
     );

@@ -24,6 +24,7 @@ func (h *ReservationHandler) Routes() http.Handler {
 	r.Use(AuthMiddleware) // Все эндпоинты бронирований защищены JWT!
 	r.Post("/", h.create)
 	r.Get("/", h.getUserReservations)
+	r.Get("/availability", h.getAvailability)
 
 	// Админский роут: получить ВСЕ бронирования
 	r.With(middleware.RequireRole(models.RoleCoworkAdmin, models.RoleSystemAdmin)).
@@ -86,4 +87,35 @@ func (h *ReservationHandler) getAllReservations(w http.ResponseWriter, r *http.R
 
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(reservations)
+}
+
+func (h *ReservationHandler) getAvailability(w http.ResponseWriter, r *http.Request) {
+	startStr := r.URL.Query().Get("start_time")
+	endStr := r.URL.Query().Get("end_time")
+
+	if startStr == "" || endStr == "" {
+		http.Error(w, "start_time and end_time query parameters are required", http.StatusBadRequest)
+		return
+	}
+
+	startTime, err := time.Parse(time.RFC3339, startStr)
+	if err != nil {
+		http.Error(w, "invalid start_time format", http.StatusBadRequest)
+		return
+	}
+
+	endTime, err := time.Parse(time.RFC3339, endStr)
+	if err != nil {
+		http.Error(w, "invalid end_time format", http.StatusBadRequest)
+		return
+	}
+
+	ids, err := h.service.GetUnavailableWorkspaceIDs(startTime, endTime)
+	if err != nil {
+		http.Error(w, "Failed to get availability", http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(ids)
 }

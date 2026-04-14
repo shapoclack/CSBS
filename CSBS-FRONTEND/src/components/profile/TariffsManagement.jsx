@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { CreditCard, Plus, Edit, Trash2, X } from 'lucide-react';
 import { apiService } from '../../services/api';
+import { toast } from '../../utils/toast';
 
 export default function TariffsManagement() {
     const [tariffs, setTariffs] = useState([]);
@@ -21,8 +22,9 @@ export default function TariffsManagement() {
         try {
             await apiService.deleteTariff(id);
             setTariffs(prev => prev.filter(t => t.ID !== id));
+            toast.success('Тариф удален');
         } catch (err) {
-            alert('Ошибка удаления: ' + err.message);
+            toast.error('Ошибка удаления: ' + err.message);
         }
     };
 
@@ -109,15 +111,16 @@ export default function TariffsManagement() {
                             <button className="btn-accent" onClick={async () => {
                                 const newName = document.getElementById('tariff-name-input').value;
                                 const newPrice = parseFloat(document.getElementById('tariff-price-input').value);
-                                if (!newName || isNaN(newPrice)) return alert('Введите корректные данные');
+                                if (!newName || isNaN(newPrice)) return toast.warning('Введите корректные данные');
                                 
                                 try {
                                     const updated = { ...editTariff, Name: newName, Price: newPrice };
                                     await apiService.updateTariff(editTariff.ID, updated);
                                     setTariffs(prev => prev.map(t => t.ID === editTariff.ID ? updated : t));
                                     setEditTariff(null);
+                                    toast.success('Тариф обновлен');
                                 } catch (err) {
-                                    alert('Ошибка сохранения: ' + err.message);
+                                    toast.error('Ошибка сохранения: ' + err.message);
                                 }
                             }}>Сохранить</button>
                         </div>

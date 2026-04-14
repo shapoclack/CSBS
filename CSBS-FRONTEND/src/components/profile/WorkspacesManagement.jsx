@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { Building2, Plus, Edit, Trash2, LayoutDashboard, X } from 'lucide-react';
 import { apiService } from '../../services/api';
+import { toast } from '../../utils/toast';
 
 export default function WorkspacesManagement() {
     const [workspaces, setWorkspaces] = useState([]);
@@ -21,8 +22,9 @@ export default function WorkspacesManagement() {
         try {
             await apiService.deleteWorkspace(id);
             setWorkspaces(prev => prev.filter(w => w.ID !== id));
+            toast.success('Рабочее место удалено');
         } catch (err) {
-            alert('Ошибка удаления: ' + err.message);
+            toast.error('Ошибка удаления: ' + err.message);
         }
     };
 
@@ -92,15 +94,16 @@ export default function WorkspacesManagement() {
                             <button className="btn-accent" onClick={async () => {
                                 const newName = document.getElementById('ws-name-input').value;
                                 const newCap = parseInt(document.getElementById('ws-capacity-input').value, 10);
-                                if (!newName || isNaN(newCap)) return alert('Введите корректные данные');
+                                if (!newName || isNaN(newCap)) return toast.warning('Введите корректные данные');
                                 
                                 try {
                                     const updated = { ...editWs, NameOrNumber: newName, Capacity: newCap };
                                     await apiService.updateWorkspace(editWs.ID, updated);
                                     setWorkspaces(prev => prev.map(w => w.ID === editWs.ID ? updated : w));
                                     setEditWs(null);
+                                    toast.success('Рабочее место обновлено');
                                 } catch (err) {
-                                    alert('Ошибка сохранения: ' + err.message);
+                                    toast.error('Ошибка сохранения: ' + err.message);
                                 }
                             }}>Сохранить</button>
                         </div>

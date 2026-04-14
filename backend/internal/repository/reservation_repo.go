@@ -12,6 +12,7 @@ type ReservationRepository interface {
 	GetByUserID(userID uint) ([]models.Reservation, error)
 	GetAll() ([]models.Reservation, error)
 	HasConflict(workspaceID uint, startTime, endTime time.Time) (bool, error)
+	GetUnavailableWorkspaceIDs(startTime, endTime time.Time) ([]uint, error)
 }
 type reservationRepositoryImpl struct {
 	db *gorm.DB
@@ -49,7 +50,16 @@ func (r *reservationRepositoryImpl) GetAll() ([]models.Reservation, error) {
 func (r *reservationRepositoryImpl) HasConflict(workspaceID uint, startTime, endTime time.Time) (bool, error) {
 	var count int64
 	err := r.db.Model(&models.Reservation{}).
-		Where("workspace_id = ? AND start_time < ? AND end_time > ?", workspaceID, endTime, startTime).
+		Where("workspace_id = ? AND start_time < ? AND end_time > ? AND status != 'отменено'", workspaceID, endTime, startTime).
 		Count(&count).Error
 	return count > 0, err
+}
+
+// GetUnavailableWorkspaceIDs возвращает массив ID рабочих мест, которые заняты в указанный промежуток
+func (r *reservationRepositoryImpl) GetUnavailableWorkspaceIDs(startTime, endTime time.Time) ([]uint, error) {
+	var ids []uint
+	err := r.db.Model(&models.Reservation{}).
+		Where("start_time < ? AND end_time > ? AND status != 'отменено'", endTime, startTime).
+		Pluck("DISTINCT workspace_id", &ids).Error
+	return ids, err
 }

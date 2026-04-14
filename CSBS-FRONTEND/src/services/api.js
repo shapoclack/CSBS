@@ -137,6 +137,9 @@ export const apiService = {
     async createReservation(data) {
         return this.fetchWithAuth('/reservations', { method: 'POST', body: JSON.stringify(data) });
     },
+    async getUnavailableWorkspaces(startTime, endTime) {
+        return this.fetchWithAuth(`/reservations/availability?start_time=${encodeURIComponent(startTime)}&end_time=${encodeURIComponent(endTime)}`);
+    },
 
     // ── Admin: Users ──
     async getAllUsers() {

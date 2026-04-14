@@ -2,6 +2,7 @@ import { lazy, Suspense } from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import Navigation from './components/Navigation';
 import Footer from './components/Footer';
+import ToastContainer from './components/ToastContainer/ToastContainer';
 import './index.css';
 
 const Home = lazy(() => import('./pages/Home'));
@@ -21,8 +22,9 @@ function App() {
   return (
     <Router>
       <div className="app-container" style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
+        <ToastContainer />
         <Navigation />
-        <main style={{ paddingTop: '80px', flex: 1 }}>
+        <main className="app-main">
           <Suspense fallback={<PageLoader />}>
             <Routes>
               <Route path="/" element={<Home />} />

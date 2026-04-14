@@ -13,6 +13,7 @@ type UserRepository interface {
 	FindRoleByName(name string) (*models.Role, error)
 	GetAll() ([]models.User, error)
 	Update(user *models.User) error
+	UpdateColumn(id uint, column string, value interface{}) error
 }
 
 type userRepositoryImpl struct {
@@ -57,4 +58,8 @@ func (r *userRepositoryImpl) GetAll() ([]models.User, error) {
 
 func (r *userRepositoryImpl) Update(user *models.User) error {
 	return r.db.Save(user).Error
+}
+
+func (r *userRepositoryImpl) UpdateColumn(id uint, column string, value interface{}) error {
+	return r.db.Model(&models.User{}).Where("id = ?", id).Update(column, value).Error
 }

@@ -80,10 +80,8 @@ export default function Profile() {
                 const freshUser = await refreshUser();
                 if (freshUser) {
                     setUser(freshUser);
-                    if (freshUser.role === 'client') {
-                        const resData = await apiService.getReservations();
-                        setReservations(resData || []);
-                    }
+                    const resData = await apiService.getReservations();
+                    setReservations(resData || []);
                 }
             } catch (err) {
                 console.error('Failed to fetch profile', err);
@@ -150,19 +148,25 @@ export default function Profile() {
                         <th>Дата начала</th>
                         <th>Дата конца</th>
                         <th>Тариф</th>
+                        <th>Статус</th>
                     </tr>
                 </thead>
                 <tbody>
                     {reservations.length > 0 ? reservations.map((res, i) => (
-                        <tr key={i}>
-                            <td>Место #{res.workspace_id}</td>
-                            <td>{new Date(res.start_time).toLocaleString()}</td>
-                            <td>{new Date(res.end_time).toLocaleString()}</td>
-                            <td>Тариф {res.tariff_id}</td>
+                        <tr key={res.ID || i}>
+                            <td>{res.Workspace?.Name || `Место #${res.WorkspaceID}`}</td>
+                            <td>{new Date(res.StartTime).toLocaleString('ru-RU')}</td>
+                            <td>{new Date(res.EndTime).toLocaleString('ru-RU')}</td>
+                            <td>{res.Tariff?.Name || `Тариф #${res.TariffID}`}</td>
+                            <td>
+                                <span className={`status-badge ${res.Status === 'подтверждено' ? 'active' : 'blocked'}`}>
+                                    {res.Status || '—'}
+                                </span>
+                            </td>
                         </tr>
                     )) : (
                         <tr>
-                            <td colSpan="4" className="empty-state">У вас пока нет бронирований.</td>
+                            <td colSpan="5" className="empty-state">У вас пока нет бронирований.</td>
                         </tr>
                     )}
                 </tbody>
