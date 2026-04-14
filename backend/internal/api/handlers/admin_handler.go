@@ -22,7 +22,7 @@ func NewAdminHandler(userService service.UserService) *AdminHandler {
 func (h *AdminHandler) Routes() http.Handler {
 	r := chi.NewRouter()
 
-	// Все роуты админки защищены!
+	// Все роуты админки защищены
 	r.Use(AuthMiddleware)
 
 	// Список пользователей видят и cowork_admin, и system_admin
@@ -33,7 +33,7 @@ func (h *AdminHandler) Routes() http.Handler {
 	r.With(middleware.RequireRole(models.RoleCoworkAdmin, models.RoleSystemAdmin)).
 		Put("/users/{id}/status", h.updateUserStatus)
 
-	// А вот менять роли может ТОЛЬКО system_admin
+	//менять роли может ТОЛЬКО system_admin
 	r.With(middleware.RequireRole(models.RoleSystemAdmin)).
 		Put("/users/{id}/role", h.updateUserRole)
 

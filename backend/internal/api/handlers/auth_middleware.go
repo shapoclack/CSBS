@@ -12,20 +12,20 @@ import (
 
 func AuthMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		// 1. Достаём токен из куки
+		// 1. Достаём токен из куки или заголовка Authorization
 		cookie, err := r.Cookie("auth_token")
 		if err != nil {
-			// Откат: если нет куки, проверим Authorization заголовок для обратной совместимости 
 			authHeader := r.Header.Get("Authorization")
 			if authHeader == "" {
 				http.Error(w, "Отсутствует токен авторизации", http.StatusUnauthorized)
 				return
 			}
+			// 2. Отрезаю кусок "Bearer ", так как он мешает парсингу
 			cookie = &http.Cookie{Value: strings.TrimPrefix(authHeader, "Bearer ")}
 		}
 
 		tokenString := cookie.Value
-		// 2. Парсим и проверяем токен
+		// 3. Декодируем и проверяем токен моим супер-секретным ключом
 		token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
 			return []byte("my-secret-key"), nil
 		})
@@ -33,7 +33,7 @@ func AuthMiddleware(next http.Handler) http.Handler {
 			http.Error(w, "Невалидный токен", http.StatusUnauthorized)
 			return
 		}
-		// 3. Достаём user_id и role из токена и кладём в контекст запроса
+		// 4. Достаю id юзера и его роль, чтобы потом использовать в других ручках 
 		claims := token.Claims.(jwt.MapClaims)
 		userID := uint(claims["user_id"].(float64))
         

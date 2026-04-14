@@ -22,19 +22,19 @@ func NewWorkspaceHandler(service service.WorkspaceService) *WorkspaceHandler {
 func (h *WorkspaceHandler) Routes() http.Handler {
 	r := chi.NewRouter()
 
-	// Публичный роут: кто угодно может посмотреть список мест
+	// Открытый эндпоинт: сюда могут ходить даже незарегистрированные юзеры
 	r.Get("/", h.getAll)
 
-	// ---> ЗАЩИЩЁННЫЕ РОУТЫ (ГРУППА) <---
+	// ---> ТУТ НАЧИНАЮТСЯ ЗАЩИЩЁННЫЕ ХЕНДЛЕРЫ <---
 	r.Group(func(r chi.Router) {
-		// 1. Сначала проверяем, залогинен ли пользователь (есть ли токен)
+		// 1. Проверяем JWT токен (если нет - сразу отдаст 401)
 		r.Use(AuthMiddleware)
 
-		// 2. Затем проверяем, является ли он админом!
-		// Разрешаем доступ только cowork_admin и system_admin
+		// 2. Проверяем права (швейцар для админов)
+		// Доступ даем только админам коворкинга и сисадминам
 		r.Use(middleware.RequireRole(models.RoleCoworkAdmin, models.RoleSystemAdmin))
 
-		// Эти действия могут делать только администраторы:
+		// Ниже лежат CRUD операции, доступные только для админов:
 		r.Post("/", h.create)
 		r.Put("/{id}", h.update)
 		r.Delete("/{id}", h.delete)
@@ -54,7 +54,7 @@ func (h *WorkspaceHandler) getAll(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(workspaces)
 }
 
-// ---> НОВЫЕ ХЕНДЛЕРЫ ДЛЯ АДМИНОВ <---
+// ---> АДМИНСКИЕ КОНТРОЛЛЕРЫ <---
 
 func (h *WorkspaceHandler) create(w http.ResponseWriter, r *http.Request) {
 	var workspace models.Workspace
@@ -76,7 +76,7 @@ func (h *WorkspaceHandler) create(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *WorkspaceHandler) update(w http.ResponseWriter, r *http.Request) {
-	// Достаём ID из пути: /api/workspaces/5
+	// Вытаскиваю ID из URL (например: /api/workspaces/5)
 	idStr := chi.URLParam(r, "id")
 	id, err := strconv.ParseUint(idStr, 10, 32)
 	if err != nil {
@@ -90,7 +90,7 @@ func (h *WorkspaceHandler) update(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Некорректный JSON", http.StatusBadRequest)
 		return
 	}
-	workspace.ID = uint(id) // Принудительно устанавливаем ID из URL
+	workspace.ID = uint(id) // Жестко прописываю ID из URL, чтобы не обновили чужое место
 
 	err = h.service.UpdateWorkspace(&workspace)
 	if err != nil {
@@ -116,5 +116,5 @@ func (h *WorkspaceHandler) delete(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	w.WriteHeader(http.StatusNoContent) // 204 No Content (успешно удалено)
+	w.WriteHeader(http.StatusNoContent) // Отдаем 204 (возвращать нечего)
 }

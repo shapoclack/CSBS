@@ -31,18 +31,18 @@ func NewUserService(repo repository.UserRepository, auditRepo repository.AuditRe
 
 func (s *userServiceImpl) Register(name, email, phone, password, requestedRole string) (*models.User, error) {
 	logger.Info.Printf("Service: Attempting to register user with email: %s", email)
-	// 1. Проверяем, не занят ли email
+	// 1. Чекнуть, свободен ли email (иначе будет дубль в базе)
 	existing, _ := s.repo.FindByEmail(email)
 	if existing.ID != 0 {
 		logger.Warn.Printf("Service: Registration failed, email %s already in use", email)
 		return nil, errors.New("пользователь с таким email уже существует")
 	}
-	// 2. Хэшируем пароль
+	// 2. Обязательно хэшируем пароль, в открытом виде хранить нельзя!
 	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
 	if err != nil {
 		return nil, err
 	}
-	// 3. Создаём пользователя
+	// 3. Собираем юзера с нужной ролью и кидаем в базу
 	roleStr := models.RoleUser
 	if requestedRole == "sysadmin" {
 		roleStr = models.RoleSystemAdmin
@@ -74,26 +74,26 @@ func (s *userServiceImpl) Register(name, email, phone, password, requestedRole s
 
 func (s *userServiceImpl) Login(email, password string) (string, error) {
 	logger.Info.Printf("Service: Login attempt for email: %s", email)
-	// 1. Ищем пользователя по email
+	// 1. Пытаемся найти юзера по email в БД
 	user, err := s.repo.FindByEmail(email)
 	if err != nil {
 		logger.Warn.Printf("Service: Login failed for %s - user not found", email)
 		return "", errors.New("неверный email или пароль")
 	}
-	// 2. Сравниваем хэш пароля с введённым паролем
+	// 2. Проверяем пароль (сравниваем хэши через bcrypt)
 	err = bcrypt.CompareHashAndPassword([]byte(user.PasswordHash), []byte(password))
 	if err != nil {
 		logger.Warn.Printf("Service: Login failed for %s - invalid password", email)
 		return "", errors.New("неверный email или пароль")
 	}
 	logger.Info.Printf("Service: User %s logged in successfully", email)
-	// 3. Генерируем JWT токен
+	// 3. Выпускаем JWT токен, чтобы фронт мог с ним ходить по ручкам API
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
 		"user_id": user.ID,
 		"email":   user.Email,
 		"role":    user.Role.Name,
 	})
-	// 4. Подписываем токен секретным ключом
+	// 4. Подписываем токен секретным ключом (в идеале перенести в .env, но пока так оставлю)
 	tokenString, err := token.SignedString([]byte("my-secret-key"))
 	if err != nil {
 		return "", err
@@ -107,7 +107,7 @@ func (s *userServiceImpl) GetUserByID(id uint) (*models.User, error) {
 	if err != nil {
 		return nil, errors.New("пользователь не найден")
 	}
-	// Hide sensitive info like password hash
+	// Затираем хэш пароля перед отправкой на фронт, чтобы не спалить данные
 	user.PasswordHash = ""
 	return user, nil
 }

@@ -16,12 +16,12 @@ type PredictionService interface {
 
 type PredictionServiceImpl struct {
 	geminiClient *gemini.GeminiClient
-	model        *leaves.Ensemble // Указатель на загруженную ML-модель
+	model        *leaves.Ensemble // Тут хранится моя загруженная LightGBM модель
 }
 
-// Конструктор теперь принимает путь к файлу модели
+// Сделал так, чтобы конструктор принимал путь к файлу. Так проще тестить
 func NewPredictionService(geminiClient *gemini.GeminiClient, modelPath string) (PredictionService, error) {
-	// Загружаем LightGBM модель при старте сервера
+	// Подгружаю ML модельку прямо при старте, чтобы потом не тратить время
 	model, err := leaves.LGEnsembleFromFile(modelPath, true)
 	if err != nil {
 		return nil, fmt.Errorf("ошибка загрузки ML модели LightGBM: %w", err)
@@ -33,10 +33,10 @@ func NewPredictionService(geminiClient *gemini.GeminiClient, modelPath string) (
 	}, nil
 }
 
-// Вспомогательная функция перевода дня недели в признаки (features) для ML
+// Перевожу день недели в числа, чтобы модель поняла (надо для бустинга)
 func getFeaturesForDay(day string) ([]float64, error) {
 	day = strings.ToLower(day)
-	// Фичи: [day_of_week (0=Пн, 6=Вс), is_weekend (0 или 1)]
+	// Мои фичи: день (0-Пн, 6-Вс) и флаг выходного (1 или 0)
 	switch day {
 	case "monday", "понедельник":
 		return []float64{0.0, 0.0}, nil
@@ -60,18 +60,17 @@ func getFeaturesForDay(day string) ([]float64, error) {
 func (s *PredictionServiceImpl) GetWorkloadPrediction(dayOfWeek string) (string, error) {
 	logger.Info.Printf("Service: Requesting workload prediction for day: %s", dayOfWeek)
 
-	// 1. Извлекаем фичи для запрашиваемого дня
+	// 1. Достаю числовые фичи для запрашиваемого дня
 	features, err := getFeaturesForDay(dayOfWeek)
 	if err != nil {
 		logger.Error.Printf("Service: Invalid day provided: %s", dayOfWeek)
 		return "", err
 	}
 
-	// 2. Инференс ML-модели (Градиентный бустинг)
-	// PredictSingle принимает срез float64 и номер итерации (0 = использовать все деревья)
+	// 2. Скармливаю фичи в модель. 0 означает использование всех построенных деревьев (бустинг)
 	prediction := s.model.PredictSingle(features, 0)
 
-	// Корректируем возможные выбросы
+	// Защита от дурака (или если модель выдаст минус)
 	if prediction < 0 {
 		prediction = 0
 	}
@@ -81,7 +80,7 @@ func (s *PredictionServiceImpl) GetWorkloadPrediction(dayOfWeek string) (string,
 
 	logger.Info.Printf("Service: ML predicted workload %.2f%% for %s", prediction, dayOfWeek)
 
-	// 3. Формируем контекст для Gemini, передавая ей уже ГОТОВЫЙ прогноз
+	// 3. Пишу промпт для нейронки Gemini. Закидываю туда процент от ML
 	prompt := fmt.Sprintf(`
 Привет! Ты AI-менеджер системы бронирования мест в коворкинге "COW".
 
@@ -104,7 +103,7 @@ func (s *PredictionServiceImpl) GetWorkloadPrediction(dayOfWeek string) (string,
 }
 	`, dayOfWeek, prediction, dayOfWeek, prediction)
 
-	// 4. Отправляем запрос через клиент
+	// 4. Стучусь в API Gemini
 	response, err := s.geminiClient.GenerateContent(prompt)
 	if err != nil {
 		logger.Error.Printf("Service: Gemini logic error for %s: %v", dayOfWeek, err)

@@ -21,7 +21,7 @@ func NewReservationHandler(service service.ReservationService) *ReservationHandl
 
 func (h *ReservationHandler) Routes() http.Handler {
 	r := chi.NewRouter()
-	r.Use(AuthMiddleware) // Все эндпоинты бронирований защищены JWT!
+	r.Use(AuthMiddleware) // Все эндпоинты бронирований защищены JWT
 	r.Post("/", h.create)
 	r.Get("/", h.getUserReservations)
 	r.Get("/availability", h.getAvailability)

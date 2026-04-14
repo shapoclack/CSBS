@@ -29,7 +29,7 @@ func main() {
 
 	cfg := config.Load()
 
-	// Создаём базу данных, если она не существует
+	// Подстраховка: создаю БД программно, если вдруг забыл создать ручками
 	config.EnsureDatabaseExists(cfg)
 
 	dsn := fmt.Sprintf("host=%s user=%s password=%s dbname=%s port=%s sslmode=disable TimeZone=Europe/Moscow",
@@ -59,7 +59,7 @@ func main() {
 
 	seedRoles(db)
 
-	// Repositories
+	// Инициализирую репозитории (слой работы с БД)
 	locationRepo := repository.NewLocationRepository(db)
 	workspaceRepo := repository.NewWorkspaceRepository(db)
 	userRepo := repository.NewUserRepository(db)
@@ -69,7 +69,7 @@ func main() {
 	categoryRepo := repository.NewCategoryRepository(db)
 	amenityRepo := repository.NewAmenityRepository(db)
 
-	// Services
+	// Поднимаю сервисы (тут вся главная бизнес-логика)
 	locationService := service.NewLocationService(locationRepo)
 	workspaceService := service.NewWorkspaceService(workspaceRepo)
 	userService := service.NewUserService(userRepo, auditRepo)
@@ -85,7 +85,7 @@ func main() {
 		logger.Error.Fatalf("Не удалось инициализировать Prediction Service: %v", err)
 	}
 
-	// Handlers
+	// Создаю хендлеры (контроллеры, которые будут обрабатывать HTTP)
 	locationHandler := handlers.NewLocationHandler(locationService)
 	workspaceHandler := handlers.NewWorkspaceHandler(workspaceService)
 	userHandler := handlers.NewUserHandler(userService)
@@ -99,10 +99,10 @@ func main() {
 	if predictionService == nil {
 		log.Fatalf("Ошибка: predictionService is nil!")
 	}
-	chatHandler := handlers.NewChatHandler(geminiClient, predictionService)
+	chatHandler := handlers.NewChatHandler(geminiClient, predictionService, reservationService, workspaceService, tariffService)
 
 	r := chi.NewRouter()
-	// Middleware
+	// Навешиваю middleware: логгер, защиту от падений и CORS
 	r.Use(middleware.Logger)
 	r.Use(middleware.Recoverer)
 	r.Use(cors.Handler(cors.Options{
@@ -112,7 +112,7 @@ func main() {
 		AllowCredentials: true,
 	}))
 
-	// Routes
+	// Объявляю все эндпоинты API
 	r.Get("/", func(w http.ResponseWriter, r *http.Request) {
 		w.Write([]byte("Hello World"))
 	})
@@ -131,7 +131,7 @@ func main() {
 		r.Mount("/chat", chatHandler.Routes())
 	})
 
-	// Call seeder
+	// Заполняю базу дефолтными данными
 	seedDatabase(db)
 
 	port := cfg.ServerPort
@@ -167,7 +167,7 @@ func seedDatabase(db *gorm.DB) {
 
 	db.Model(&models.Tariff{}).Count(&count)
 	if count == 0 {
-		// Создаем 3 базовых тарифа для каждой из 3 локаций
+		//3 дефолтных тарифа, чтобы сразу всё работало
 		for i := uint(1); i <= 3; i++ {
 			db.Create(&models.Tariff{Name: "1 час", Price: 175, DurationMinutes: 60, LocationID: i})
 			db.Create(&models.Tariff{Name: "4 часа (Полдня)", Price: 700, DurationMinutes: 240, LocationID: i})

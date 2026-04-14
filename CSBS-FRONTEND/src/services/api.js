@@ -164,10 +164,10 @@ export const apiService = {
     },
 
     // ── AI Chat ──
-    async sendAiMessage(message) {
+    async sendAiMessage(message, history = []) {
         return this.fetchWithAuth('/chat', {
             method: 'POST',
-            body: JSON.stringify({ message })
+            body: JSON.stringify({ message, history })
         });
     }
 };

@@ -14,12 +14,12 @@ type Config struct {
 	DBPassword   string
 	DBName       string
 	ServerPort   string
-	GeminiAPIKey string // Наш новый секретный ключ!
+	GeminiAPIKey string // Наш новый секретный ключ
 }
 
 // Load - загружает переменные из .env файла и возвращает структуру Config
 func Load() *Config {
-	// Пытаемся загрузить .env, но если файла нет (например, на проде),
+	// Пытаемся загрузить .env, но если файла нет,
 	// то просто игнорируем ошибку и читаем системные переменные
 	if err := godotenv.Load(); err != nil {
 		log.Println("Не удалось найти файл .env. Используются системные переменные окружения")
