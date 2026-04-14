@@ -137,6 +137,15 @@ export const apiService = {
     async createReservation(data) {
         return this.fetchWithAuth('/reservations', { method: 'POST', body: JSON.stringify(data) });
     },
+    async adminCreateReservation(data) {
+        return this.fetchWithAuth('/reservations/admin', { method: 'POST', body: JSON.stringify(data) });
+    },
+    async updateReservation(id, data) {
+        return this.fetchWithAuth(`/reservations/${id}`, { method: 'PUT', body: JSON.stringify(data) });
+    },
+    async deleteReservation(id) {
+        return this.fetchWithAuth(`/reservations/${id}`, { method: 'DELETE' });
+    },
     async getUnavailableWorkspaces(startTime, endTime) {
         return this.fetchWithAuth(`/reservations/availability?start_time=${encodeURIComponent(startTime)}&end_time=${encodeURIComponent(endTime)}`);
     },

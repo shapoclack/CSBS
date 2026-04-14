@@ -6,6 +6,7 @@ import (
 	"csbs/backend/internal/service"
 	"encoding/json"
 	"net/http"
+	"strconv"
 	"time"
 
 	"github.com/go-chi/chi/v5"
@@ -26,9 +27,15 @@ func (h *ReservationHandler) Routes() http.Handler {
 	r.Get("/", h.getUserReservations)
 	r.Get("/availability", h.getAvailability)
 
-	// Админский роут: получить ВСЕ бронирования
+	// Админские роуты
 	r.With(middleware.RequireRole(models.RoleCoworkAdmin, models.RoleSystemAdmin)).
 		Get("/all", h.getAllReservations)
+	r.With(middleware.RequireRole(models.RoleCoworkAdmin, models.RoleSystemAdmin)).
+		Post("/admin", h.adminCreate)
+	r.With(middleware.RequireRole(models.RoleCoworkAdmin, models.RoleSystemAdmin)).
+		Put("/{id}", h.update)
+	r.With(middleware.RequireRole(models.RoleCoworkAdmin, models.RoleSystemAdmin)).
+		Delete("/{id}", h.delete)
 
 	return r
 }
@@ -38,6 +45,22 @@ type createReservationRequest struct {
 	TariffID    uint   `json:"tariff_id"`
 	StartTime   string `json:"start_time"` // формат: "2026-03-15T10:00:00Z"
 	EndTime     string `json:"end_time"`
+}
+
+type adminCreateReservationRequest struct {
+	UserID      uint   `json:"user_id"`
+	WorkspaceID uint   `json:"workspace_id"`
+	TariffID    uint   `json:"tariff_id"`
+	StartTime   string `json:"start_time"`
+	EndTime     string `json:"end_time"`
+}
+
+type updateReservationRequest struct {
+	WorkspaceID uint   `json:"workspace_id"`
+	TariffID    uint   `json:"tariff_id"`
+	StartTime   string `json:"start_time"`
+	EndTime     string `json:"end_time"`
+	Status      string `json:"status"`
 }
 
 func (h *ReservationHandler) create(w http.ResponseWriter, r *http.Request) {
@@ -87,6 +110,94 @@ func (h *ReservationHandler) getAllReservations(w http.ResponseWriter, r *http.R
 
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(reservations)
+}
+
+func (h *ReservationHandler) adminCreate(w http.ResponseWriter, r *http.Request) {
+	var req adminCreateReservationRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		http.Error(w, "Некорректный JSON", http.StatusBadRequest)
+		return
+	}
+	if req.UserID == 0 {
+		http.Error(w, "user_id обязателен", http.StatusBadRequest)
+		return
+	}
+
+	startTime, err := time.Parse(time.RFC3339, req.StartTime)
+	if err != nil {
+		http.Error(w, "Некорректный start_time", http.StatusBadRequest)
+		return
+	}
+	endTime, err := time.Parse(time.RFC3339, req.EndTime)
+	if err != nil {
+		http.Error(w, "Некорректный end_time", http.StatusBadRequest)
+		return
+	}
+
+	reservation, err := h.service.CreateReservation(req.UserID, req.WorkspaceID, req.TariffID, startTime, endTime)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusCreated)
+	json.NewEncoder(w).Encode(reservation)
+}
+
+func (h *ReservationHandler) update(w http.ResponseWriter, r *http.Request) {
+	idStr := chi.URLParam(r, "id")
+	id, err := strconv.ParseUint(idStr, 10, 64)
+	if err != nil {
+		http.Error(w, "Некорректный ID", http.StatusBadRequest)
+		return
+	}
+
+	var req updateReservationRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		http.Error(w, "Некорректный JSON", http.StatusBadRequest)
+		return
+	}
+
+	startTime, err := time.Parse(time.RFC3339, req.StartTime)
+	if err != nil {
+		http.Error(w, "Некорректный start_time", http.StatusBadRequest)
+		return
+	}
+	endTime, err := time.Parse(time.RFC3339, req.EndTime)
+	if err != nil {
+		http.Error(w, "Некорректный end_time", http.StatusBadRequest)
+		return
+	}
+
+	actorUserID := r.Context().Value(middleware.UserIDKey).(uint)
+
+	reservation, err := h.service.UpdateReservation(uint(id), req.WorkspaceID, req.TariffID, startTime, endTime, req.Status, actorUserID)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(reservation)
+}
+
+func (h *ReservationHandler) delete(w http.ResponseWriter, r *http.Request) {
+	idStr := chi.URLParam(r, "id")
+	id, err := strconv.ParseUint(idStr, 10, 64)
+	if err != nil {
+		http.Error(w, "Некорректный ID", http.StatusBadRequest)
+		return
+	}
+
+	actorUserID := r.Context().Value(middleware.UserIDKey).(uint)
+
+	if err := h.service.DeleteReservation(uint(id), actorUserID); err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	w.WriteHeader(http.StatusNoContent)
 }
 
 func (h *ReservationHandler) getAvailability(w http.ResponseWriter, r *http.Request) {
