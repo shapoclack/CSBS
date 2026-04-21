@@ -152,9 +152,16 @@ export default function Profile() {
                     </tr>
                 </thead>
                 <tbody>
-                    {reservations.length > 0 ? reservations.map((res, i) => (
+                    {reservations.length > 0 ? reservations.map((res, i) => {
+                        const placeName = res.Workspace?.NameOrNumber || res.Workspace?.Name || `Место #${res.WorkspaceID}`;
+                        const loc = res.Workspace?.Location;
+                        const locLine = loc ? [loc.Name, loc.Address].filter(Boolean).join(', ') : null;
+                        return (
                         <tr key={res.ID || i}>
-                            <td>{res.Workspace?.Name || `Место #${res.WorkspaceID}`}</td>
+                            <td>
+                                <div>{placeName}</div>
+                                {locLine && <div className="text-muted" style={{ fontSize: '0.85rem', marginTop: 2 }}>{locLine}</div>}
+                            </td>
                             <td>{new Date(res.StartTime).toLocaleString('ru-RU')}</td>
                             <td>{new Date(res.EndTime).toLocaleString('ru-RU')}</td>
                             <td>{res.Tariff?.Name || `Тариф #${res.TariffID}`}</td>
@@ -164,7 +171,8 @@ export default function Profile() {
                                 </span>
                             </td>
                         </tr>
-                    )) : (
+                        );
+                    }) : (
                         <tr>
                             <td colSpan="5" className="empty-state">У вас пока нет бронирований.</td>
                         </tr>

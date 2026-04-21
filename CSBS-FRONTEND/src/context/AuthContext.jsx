@@ -22,8 +22,8 @@ export function AuthProvider({ children }) {
         return freshUser;
     }, []);
 
-    const register = useCallback(async (name, email, phone, password, role) => {
-        await authService.register(name, email, phone, password, role);
+    const register = useCallback(async (name, email, phone, password) => {
+        await authService.register(name, email, phone, password);
         return login(email, password);
     }, [login]);
 

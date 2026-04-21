@@ -24,13 +24,13 @@ func NewWorkspaceRepository(db *gorm.DB) WorkspaceRepository {
 
 func (r *WorkspaceRepositoryImpl) GetAll() ([]models.Workspace, error) {
 	var workspaces []models.Workspace
-	err := r.db.Preload("Category").Find(&workspaces).Error
+	err := r.db.Preload("Category").Preload("Location").Find(&workspaces).Error
 
 	return workspaces, err
 }
 func (r *WorkspaceRepositoryImpl) GetByID(id uint) (*models.Workspace, error) {
 	var workspace models.Workspace
-	err := r.db.Preload("Category").First(&workspace, id).Error
+	err := r.db.Preload("Category").Preload("Location").First(&workspace, id).Error
 	return &workspace, err
 }
 func (r *WorkspaceRepositoryImpl) Create(workspace *models.Workspace) error {

@@ -208,6 +208,7 @@ func (h *ChatHandler) handleChat(w http.ResponseWriter, r *http.Request) {
 	// Получаем доступные воркспейсы
 	workspacesInfo := h.getWorkspacesInfo()
 	tariffsInfo := h.getTariffsInfo()
+	locationsInfo := h.getLocationsInfo()
 
 	todayStr := time.Now().Format("2006-01-02")
 	weekdayRu := russianWeekday(time.Now().Weekday())
@@ -224,6 +225,9 @@ func (h *ChatHandler) handleChat(w http.ResponseWriter, r *http.Request) {
 
 Базовая стоимость места: 175 руб/час или 1400 руб/день.
 Актуальный прогноз загруженности на эту неделю: %s.
+
+Наши локации (коворкинги):
+%s
 
 Доступные рабочие места:
 %s
@@ -259,7 +263,8 @@ func (h *ChatHandler) handleChat(w http.ResponseWriter, r *http.Request) {
 5. Если пользователь хочет забронировать, но не указал конкретное место или дату — уточни у него, НЕ бронируй.
 6. Если загрузка на запрошенный день >75%%, предупреди о повышении цены на 10-20%%. Если <45%% — предложи скидку.
 7. Не здоровайся в ответах — сразу переходи к сути.
-8. Всегда используй workspace_id и tariff_id из списков выше, НЕ выдумывай ID.`, todayStr, weekdayRu, authStatus, formattedWorkload, workspacesInfo, tariffsInfo)
+8. Всегда используй workspace_id и tariff_id из списков выше, НЕ выдумывай ID.
+9. Если пользователь упоминает локацию свободной формой (улица, район, название коворкинга — например, "Тверская", "на Невском", "в эко-коворкинге"), сопоставь её со списком локаций выше по названию или адресу и используй соответствующий ID. Переспрашивай только если совпадений нет или их несколько неоднозначных.`, todayStr, weekdayRu, authStatus, formattedWorkload, locationsInfo, workspacesInfo, tariffsInfo)
 
 	// Формируем историю сообщений для контекста
 	var conversationParts []string
@@ -424,8 +429,12 @@ func (h *ChatHandler) getWorkspacesInfo() string {
 		if ws.Category.Name != "" {
 			categoryName = ws.Category.Name
 		}
-		lines = append(lines, fmt.Sprintf("- ID:%d, Название: %s, Тип: %s, Вместимость: %d, Локация ID:%d",
-			ws.ID, ws.NameOrNumber, categoryName, ws.Capacity, ws.LocationID))
+		locationLabel := fmt.Sprintf("ID:%d", ws.LocationID)
+		if ws.Location.Name != "" || ws.Location.Address != "" {
+			locationLabel = fmt.Sprintf("ID:%d (%s, %s)", ws.LocationID, ws.Location.Name, ws.Location.Address)
+		}
+		lines = append(lines, fmt.Sprintf("- ID:%d, Название: %s, Тип: %s, Вместимость: %d, Локация %s",
+			ws.ID, ws.NameOrNumber, categoryName, ws.Capacity, locationLabel))
 	}
 
 	if len(lines) > 50 {
@@ -433,6 +442,31 @@ func (h *ChatHandler) getWorkspacesInfo() string {
 		lines = append(lines, "... (и ещё места)")
 	}
 
+	return strings.Join(lines, "\n")
+}
+
+// getLocationsInfo строит отдельный список локаций по данным подгруженных воркспейсов,
+// чтобы модель могла сопоставить свободную формулировку пользователя (улица, район, название)
+// с конкретным Location ID.
+func (h *ChatHandler) getLocationsInfo() string {
+	workspaces, err := h.workspaceService.GetAllWorkspaces()
+	if err != nil {
+		return "Не удалось загрузить список локаций"
+	}
+
+	seen := map[uint]bool{}
+	var lines []string
+	for _, ws := range workspaces {
+		if ws.LocationID == 0 || seen[ws.LocationID] {
+			continue
+		}
+		seen[ws.LocationID] = true
+		lines = append(lines, fmt.Sprintf("- ID:%d, Название: %s, Адрес: %s",
+			ws.LocationID, ws.Location.Name, ws.Location.Address))
+	}
+	if len(lines) == 0 {
+		return "Локации не настроены"
+	}
 	return strings.Join(lines, "\n")
 }
 

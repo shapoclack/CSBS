@@ -42,17 +42,12 @@ func (s *userServiceImpl) Register(name, email, phone, password, requestedRole s
 	if err != nil {
 		return nil, err
 	}
-	// 3. Собираем юзера с нужной ролью и кидаем в базу
-	roleStr := models.RoleUser
-	if requestedRole == "sysadmin" {
-		roleStr = models.RoleSystemAdmin
-	} else if requestedRole == "manager" {
-		roleStr = models.RoleCoworkAdmin
-	}
-
-	role, err := s.repo.FindRoleByName(roleStr)
+	// 3. Новые регистрации всегда получают обычную роль.
+	// Повышение до cowork_admin/system_admin — только через админку или SQL.
+	_ = requestedRole
+	role, err := s.repo.FindRoleByName(models.RoleUser)
 	if err != nil {
-		role, _ = s.repo.FindRoleByName(models.RoleUser)
+		return nil, err
 	}
 
 	user := &models.User{

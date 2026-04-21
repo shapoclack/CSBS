@@ -1,12 +1,12 @@
 const API_URL = 'http://localhost:8080/api';
 
 export const authService = {
-    async register(name, email, phone, password, role = 'client') {
+    async register(name, email, phone, password) {
         const res = await fetch(`${API_URL}/users/register`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             credentials: 'include',
-            body: JSON.stringify({ name, email, phone, password, role })
+            body: JSON.stringify({ name, email, phone, password })
         });
         if (!res.ok) {
             const errorText = await res.text();

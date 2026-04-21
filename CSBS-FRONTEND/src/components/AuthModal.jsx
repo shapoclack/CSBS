@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { X, Mail, Lock, User, Eye, EyeOff, Phone, Shield } from 'lucide-react';
+import { X, Mail, Lock, User, Eye, EyeOff, Phone } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import './AuthModal.css';
 
@@ -16,14 +16,13 @@ export default function AuthModal({ isOpen, onClose, initialMode = 'login' }) {
         phone: '',
         password: '',
         confirmPassword: '',
-        role: 'client'
     });
 
     const [errors, setErrors] = useState({});
 
     // Reset state when modal closes or mode changes
     useEffect(() => {
-        setFormData({ name: '', email: '', phone: '', password: '', confirmPassword: '', role: 'client' });
+        setFormData({ name: '', email: '', phone: '', password: '', confirmPassword: '' });
         setErrors({});
         setShowPassword(false);
         setShowConfirmPassword(false);
@@ -125,7 +124,7 @@ export default function AuthModal({ isOpen, onClose, initialMode = 'login' }) {
         if (validateForm()) {
             try {
                 if (mode === 'register') {
-                    await register(formData.name, formData.email, formData.phone, formData.password, formData.role);
+                    await register(formData.name, formData.email, formData.phone, formData.password);
                 } else {
                     await login(formData.email, formData.password);
                 }
@@ -224,22 +223,6 @@ export default function AuthModal({ isOpen, onClose, initialMode = 'login' }) {
                                     />
                                 </div>
                                 {errors.phone && <span className="error-text">{errors.phone}</span>}
-                            </div>
-                            <div className="form-group">
-                                <label htmlFor="role">Роль (для демо)</label>
-                                <div className="input-with-icon">
-                                    <Shield size={18} className="input-icon" />
-                                    <select
-                                        id="input_role"
-                                        value={formData.role}
-                                        onChange={(e) => handleChange(e, 'role')}
-                                        style={{ width: '100%', padding: '0.8rem 1rem 0.8rem 2.8rem', backgroundColor: 'rgba(0,0,0,0.2)', color: '#fff', border: '1px solid var(--color-border)', borderRadius: '8px', appearance: 'none' }}
-                                    >
-                                        <option value="client" style={{ color: '#0a0e17' }}>Зарегистрированный пользователь</option>
-                                        <option value="manager" style={{ color: '#0a0e17' }}>Администратор коворкинга</option>
-                                        <option value="sysadmin" style={{ color: '#0a0e17' }}>Системный администратор</option>
-                                    </select>
-                                </div>
                             </div>
                         </>
                     )}

@@ -34,6 +34,7 @@ func (r *reservationRepositoryImpl) GetByUserID(userID uint) ([]models.Reservati
 	var reservations []models.Reservation
 	err := r.db.Where("user_id = ?", userID).
 		Preload("Workspace").
+		Preload("Workspace.Location").
 		Preload("Tariff").
 		Find(&reservations).Error
 	return reservations, err
@@ -44,6 +45,7 @@ func (r *reservationRepositoryImpl) GetAll() ([]models.Reservation, error) {
 	err := r.db.
 		Preload("User").
 		Preload("Workspace").
+		Preload("Workspace.Location").
 		Preload("Tariff").
 		Order("created_at desc").
 		Find(&reservations).Error
@@ -56,6 +58,7 @@ func (r *reservationRepositoryImpl) GetByID(id uint) (*models.Reservation, error
 	err := r.db.
 		Preload("User").
 		Preload("Workspace").
+		Preload("Workspace.Location").
 		Preload("Tariff").
 		First(&reservation, id).Error
 	if err != nil {
