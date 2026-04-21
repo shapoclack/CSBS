@@ -4,6 +4,7 @@ import (
 	"csbs/backend/internal/service"
 	"csbs/backend/pkg/gemini"
 	"csbs/backend/pkg/logger"
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -12,6 +13,11 @@ import (
 
 	"github.com/go-chi/chi/v5"
 	"github.com/golang-jwt/jwt/v5"
+)
+
+const (
+	chatHistoryCookieName = "chat_history"
+	chatHistoryMaxMessages = 20
 )
 
 type ChatHandler struct {
@@ -42,7 +48,70 @@ func (h *ChatHandler) Routes() http.Handler {
 	r := chi.NewRouter()
 	// Чат доступен всем, авторизация опциональная (для бронирования)
 	r.Post("/", h.handleChat)
+	r.Get("/history", h.getHistory)
+	r.Delete("/history", h.clearHistory)
 	return r
+}
+
+// readHistoryCookie декодирует base64+JSON историю из HttpOnly куки
+func readHistoryCookie(r *http.Request) []chatMessage {
+	cookie, err := r.Cookie(chatHistoryCookieName)
+	if err != nil || cookie.Value == "" {
+		return nil
+	}
+	raw, err := base64.StdEncoding.DecodeString(cookie.Value)
+	if err != nil {
+		return nil
+	}
+	var msgs []chatMessage
+	if err := json.Unmarshal(raw, &msgs); err != nil {
+		return nil
+	}
+	return msgs
+}
+
+// writeHistoryCookie кодирует и записывает историю в HttpOnly куку (с обрезкой до chatHistoryMaxMessages)
+func writeHistoryCookie(w http.ResponseWriter, history []chatMessage) {
+	if len(history) > chatHistoryMaxMessages {
+		history = history[len(history)-chatHistoryMaxMessages:]
+	}
+	data, err := json.Marshal(history)
+	if err != nil {
+		logger.Error.Printf("Chat: failed to marshal history: %v", err)
+		return
+	}
+	encoded := base64.StdEncoding.EncodeToString(data)
+	http.SetCookie(w, &http.Cookie{
+		Name:     chatHistoryCookieName,
+		Value:    encoded,
+		Path:     "/",
+		HttpOnly: true,
+		Secure:   false, // set to true in production with HTTPS
+		SameSite: http.SameSiteLaxMode,
+		MaxAge:   3600 * 24 * 7, // 7 дней
+	})
+}
+
+func (h *ChatHandler) getHistory(w http.ResponseWriter, r *http.Request) {
+	history := readHistoryCookie(r)
+	if history == nil {
+		history = []chatMessage{}
+	}
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(history)
+}
+
+func (h *ChatHandler) clearHistory(w http.ResponseWriter, r *http.Request) {
+	http.SetCookie(w, &http.Cookie{
+		Name:     chatHistoryCookieName,
+		Value:    "",
+		Path:     "/",
+		HttpOnly: true,
+		Secure:   false,
+		SameSite: http.SameSiteLaxMode,
+		MaxAge:   -1,
+	})
+	w.WriteHeader(http.StatusNoContent)
 }
 
 // --- Структуры запроса/ответа ---

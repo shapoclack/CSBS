@@ -51,10 +51,13 @@ export default function AiChat() {
     const [input, setInput] = useState('');
     const [isLoading, setIsLoading] = useState(false);
     const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
-    const messagesEndRef = useRef(null);
+    const messagesContainerRef = useRef(null);
 
     const scrollToBottom = () => {
-        messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+        const el = messagesContainerRef.current;
+        if (el) {
+            el.scrollTop = el.scrollHeight;
+        }
     };
 
     useEffect(() => {
@@ -116,7 +119,7 @@ export default function AiChat() {
             </div>
 
             <div className="chat-container glass-panel">
-                <div className="chat-messages">
+                <div className="chat-messages" ref={messagesContainerRef}>
                     {messages.map((msg, idx) => (
                         <div key={idx} className={`message-wrapper ${msg.role}`}>
                             <div className="message-bubble">
@@ -152,7 +155,6 @@ export default function AiChat() {
                             </div>
                         </div>
                     )}
-                    <div ref={messagesEndRef} />
                 </div>
 
                 <div className="chat-input-area">
