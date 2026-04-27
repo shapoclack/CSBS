@@ -42,5 +42,28 @@ services:
     ports:
       - "3000:80"
 
+  postgres-backup:
+    image: prodrigestivill/postgres-backup-local:16
+    restart: unless-stopped
+    environment:
+      POSTGRES_HOST: postgres
+      POSTGRES_DB: ${DB_NAME}
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      # Cron-расписание бэкапа. @daily = каждый день в 00:00 UTC
+      SCHEDULE: "@daily"
+      # Политика хранения дампов
+      BACKUP_KEEP_DAYS: 7
+      BACKUP_KEEP_WEEKS: 4
+      BACKUP_KEEP_MONTHS: 6
+      # Опции pg_dump (gzip-сжатие)
+      POSTGRES_EXTRA_OPTS: "-Z6 --schema=public --blobs"
+    volumes:
+      # Дампы складываются в ./backups/{daily,weekly,monthly} на хосте
+      - ./backups:/backups
+    depends_on:
+      postgres:
+        condition: service_healthy
+
 volumes:
   postgres-data:

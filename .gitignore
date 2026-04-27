@@ -34,6 +34,9 @@ pnpm-debug.log*
 *.sqlite
 *.sqlite3
 
+# Database backups (генерируются сервисом postgres-backup в docker-compose)
+backups/
+
 # Claude Code
 .claude/
 .README1.md
