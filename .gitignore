@@ -36,3 +36,4 @@ pnpm-debug.log*
 
 # Claude Code
 .claude/
+.README1.md
