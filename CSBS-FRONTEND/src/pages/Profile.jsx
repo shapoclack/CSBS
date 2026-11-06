@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { lazy, Suspense, useState, useEffect } from 'react';
 import {
     User, Calendar, Settings, Users, ShieldAlert,
     CreditCard, Building2, Terminal, Trash2, FileText, QrCode, BarChart3
@@ -9,17 +9,18 @@ import { useAuth } from '../context/AuthContext';
 import { apiService } from '../services/api';
 import './Profile.css';
 import '../components/profile/ProfileTabs.css';
+import ProfileLoadBoundary from '../components/profile/ProfileLoadBoundary';
 
-// Tab components
-import ReservationQrModal from '../components/profile/ReservationQrModal';
-import AnalyticsDashboard from '../components/profile/AnalyticsDashboard';
-import BookingsManagement from '../components/profile/BookingsManagement';
-import WorkspacesManagement from '../components/profile/WorkspacesManagement';
-import TariffsManagement from '../components/profile/TariffsManagement';
-import ClientsList from '../components/profile/ClientsList';
-import AdminsManagement from '../components/profile/AdminsManagement';
-import GlobalSettings from '../components/profile/GlobalSettings';
-import SystemAuditLogs from '../components/profile/SystemAuditLogs';
+// Загружаем код вкладки или QR-окна только при первом открытии.
+const ReservationQrModal = lazy(() => import('../components/profile/ReservationQrModal'));
+const AnalyticsDashboard = lazy(() => import('../components/profile/AnalyticsDashboard'));
+const BookingsManagement = lazy(() => import('../components/profile/BookingsManagement'));
+const WorkspacesManagement = lazy(() => import('../components/profile/WorkspacesManagement'));
+const TariffsManagement = lazy(() => import('../components/profile/TariffsManagement'));
+const ClientsList = lazy(() => import('../components/profile/ClientsList'));
+const AdminsManagement = lazy(() => import('../components/profile/AdminsManagement'));
+const GlobalSettings = lazy(() => import('../components/profile/GlobalSettings'));
+const SystemAuditLogs = lazy(() => import('../components/profile/SystemAuditLogs'));
 
 /* ── helpers ── */
 
@@ -258,15 +259,34 @@ export default function Profile() {
 
                 {/* Content */}
                 <main className="profile-main">
-                    {renderContent()}
+                    <ProfileLoadBoundary key={activeTab}>
+                        <Suspense fallback={
+                            <div className="profile-card glass-panel" role="status">
+                                Загружаем раздел...
+                            </div>
+                        }>
+                            {renderContent()}
+                        </Suspense>
+                    </ProfileLoadBoundary>
                 </main>
             </div>
 
             {qrReservationId && (
-                <ReservationQrModal
-                    reservationId={qrReservationId}
-                    onClose={() => setQrReservationId(null)}
-                />
+                <ProfileLoadBoundary key={qrReservationId} onClose={() => setQrReservationId(null)}>
+                    <Suspense fallback={
+                        <div className="profile-card glass-panel" role="status">
+                            <p>Загружаем QR-пропуск...</p>
+                            <button type="button" onClick={() => setQrReservationId(null)}>
+                                Отмена
+                            </button>
+                        </div>
+                    }>
+                        <ReservationQrModal
+                            reservationId={qrReservationId}
+                            onClose={() => setQrReservationId(null)}
+                        />
+                    </Suspense>
+                </ProfileLoadBoundary>
             )}
         </div>
     );

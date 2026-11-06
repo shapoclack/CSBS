@@ -1,16 +1,60 @@
-# React + Vite
+# CSBS Frontend
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+React + Vite. Все запросы клиента идут на `/api` на том же домене, что и сайт.
 
-Currently, two official plugins are available:
+## Docker Compose
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+Из корня репозитория:
 
-## React Compiler
+```sh
+docker compose --env-file backend/.env up --build
+```
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+Сайт доступен на `http://localhost:3000`. Nginx отдаёт сборку и проксирует
+`/api` и `/api/*` на `http://backend:8080`, сохраняя путь, параметры запроса
+и cookies. Имя `backend` разрешается внутри сети Docker Compose.
+Для другого сервера upstream нужно изменить в `nginx.conf`.
 
-## Expanding the ESLint configuration
+## Локальная разработка
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+Запустите Go backend на порту 8080, затем в этой папке:
+
+```sh
+npm ci
+npm run dev
+```
+
+Vite доступен на `http://localhost:3000` и проксирует `/api` на
+`http://127.0.0.1:8080`. `npm run preview` использует тот же прокси
+для проверки production-сборки. При изменении локального порта backend
+обновите `server.proxy` в `vite.config.js`.
+
+## Проверки
+
+```sh
+npm run test:unit
+npm run build
+npm run lint
+```
+
+## Загрузка личного кабинета по частям
+
+Страницы уже разделены через `React.lazy` в `App.jsx`. Внутри профиля
+восемь административных вкладок и QR-окно также загружаются через
+динамический `import()` только при первом открытии. Основные вкладки
+«Профиль» и «Мои бронирования» остаются в модуле страницы.
+
+`Suspense` показывает локальный индикатор загрузки, сохраняя меню кабинета.
+`ProfileLoadBoundary` обрабатывает ошибки загрузки и рендеринга раздела.
+При повторном открытии уже загруженный модуль используется повторно;
+API-запросы вкладки при этом могут выполняться заново.
+
+Проверка production-сборки с моками API:
+
+```sh
+npx playwright install chromium
+npx playwright test e2e/profile-lazy.spec.js --project=build
+```
+
+Тесты проверяют сетевые запросы к чанкам, первое и повторное открытие,
+работу QR-окна и сохранение навигации при ошибке загрузки модуля.

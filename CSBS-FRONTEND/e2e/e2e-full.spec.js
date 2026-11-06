@@ -62,7 +62,7 @@ test('E2E: регистрация нового пользователя и вы�
 // ─────────────────────────────────────────────────────────────────────────────
 test('E2E: вход, создание брони и её отображение в профиле', async ({ page }) => {
   // Сначала регистрируем пользователя через API напрямую
-  const registerRes = await page.request.post('http://localhost:8080/api/users/register', {
+  const registerRes = await page.request.post('/api/users/register', {
     data: TEST_USER,
   });
   expect(registerRes.ok()).toBeTruthy();
@@ -121,8 +121,8 @@ test('E2E: вход, создание брони и её отображение 
 // ─────────────────────────────────────────────────────────────────────────────
 test('E2E: ИИ-ассистент принимает сообщение и возвращает ответ от Gemini', async ({ page }) => {
   // Регистрация + логин через API
-  await page.request.post('http://localhost:8080/api/users/register', { data: TEST_USER }).catch(() => {});
-  const loginRes = await page.request.post('http://localhost:8080/api/users/login', {
+  await page.request.post('/api/users/register', { data: TEST_USER }).catch(() => {});
+  const loginRes = await page.request.post('/api/users/login', {
     data: { email: TEST_USER.email, password: TEST_USER.password },
   });
   expect(loginRes.ok()).toBeTruthy();

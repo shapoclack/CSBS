@@ -23,7 +23,7 @@ export default defineConfig({
     // Автотесты по PROD-сборке (smoke-тесты на vite preview)
     {
       name: 'build',
-      testMatch: /build-smoke\.spec\.js/,
+      testMatch: /(?:build-smoke|profile-lazy)\.spec\.js/,
       use: {
         ...devices['Desktop Chrome'],
         baseURL: 'http://localhost:4173',
